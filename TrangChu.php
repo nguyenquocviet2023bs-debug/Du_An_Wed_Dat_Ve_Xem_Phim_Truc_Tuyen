@@ -16,16 +16,16 @@
                     <span>Cinema Group 11</span>
                 </div>
                 <nav class="navbar">
-                    <a href="#" class="nav-link active">Mua Vé</a>
-                    <a href="#" class="nav-link">Phim</a>
-                    <a href="#" class="nav-link">Rạp</a>
-                    <a href="#" class="nav-link">Rap/Giá Vé</a>
+                    <a href="#" class="nav-link">Trang chủ</a>
                 </nav>
                 <div class="header-right">
-                    <button class="search-btn">
-                        <i class="fas fa-search"></i>
-                    </button>
-                    <button class="login-btn">Đăng Nhập</button>
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Tìm tên phim...">
+                        <button class="search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <button class="login-btn" id="openLoginBtn">Đăng Nhập</button>
                     <div class="vip-badge">
                         <i class="fas fa-star"></i>
                     </div>
@@ -63,7 +63,7 @@
                         <span class="movie-age">T18</span>
                     </div>
                     <h3 class="movie-title">Heo 5 Móng</h3>
-                    <p class="movie-info">Hài | 119 phút</p>
+                    <p class="movie-info">Kinh dị | 119 phút</p>
                     <button class="btn-book-movie">Mua vé</button>
                 </div>
                 <div class="movie-card">
@@ -203,6 +203,56 @@
             </div>
         </div>
     </section>
+    <!-- Giới Thiệu Section -->
+    <section class="intro-section">
+        <div class="container">
+            <h2 class="section-title">Tại Sao Chọn Cinema Group 11?</h2>
+            <div class="intro-grid">
+                <div class="intro-card">
+                    <div class="intro-icon">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <h3>Phim Đa Dạng</h3>
+                    <p>Cập nhật liên tục những bộ phim mới nhất, từ các tác phẩm kinh điển đến những bom tấn mới ra mắt.</p>
+                </div>
+                <div class="intro-card">
+                    <div class="intro-icon">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <h3>Đặt Vé Dễ Dàng</h3>
+                    <p>Giao diện thân thiện, chỉ cần vài bước đơn giản để đặt vé xem phim yêu thích của bạn.</p>
+                </div>
+                <div class="intro-card">
+                    <div class="intro-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h3>Thanh Toán An Toàn</h3>
+                    <p>Hỗ trợ nhiều phương thức thanh toán với bảo mật cao, đảm bảo an toàn cho mọi giao dịch.</p>
+                </div>
+                <div class="intro-card">
+                    <div class="intro-icon">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <h3>Ưu Đãi Thành Viên</h3>
+                    <p>Thành viên VIP được hưởng nhiều ưu đãi độc quyền, giảm giá vé và khuyến mãi hấp dẫn.</p>
+                </div>
+                <div class="intro-card">
+                    <div class="intro-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h3>Chất Lượng Tuyệt Vời</h3>
+                    <p>Công nghệ chiếu phim hiện đại, hệ thống âm thanh cao cấp mang đến trải nghiệm tuyệt vời.</p>
+                </div>
+                <div class="intro-card">
+                    <div class="intro-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3>Hỗ Trợ 24/7</h3>
+                    <p>Đội ngũ hỗ trợ khách hàng sẵn sàng giúp đỡ bạn bất kỳ lúc nào với mọi thắc mắc.</p>
+                </div>
+            </div>
+        </div>
+    </section>
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -272,6 +322,182 @@
             </div>
         </div>
     </footer>
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <h2>Đăng Nhập</h2>
+                <p>Đăng nhập với tài khoản của bạn!</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email / Tên đăng nhập</label>
+                    <input type="text" id="loginEmail" name="loginEmail" placeholder="Email hoặc tên đăng nhập" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Mật khẩu</label>
+                    <input type="password" id="loginPassword" name="loginPassword" placeholder="Mật khẩu" required>
+                </div>
+                <div class="form-footer">
+                    <a href="#" class="forgot-password">Quên mật khẩu?</a>
+                </div>
+                <button type="submit" class="btn-submit">Đăng Nhập</button>
+                <div class="social-login">
+                    <p>Hoặc đăng nhập với</p>
+                    <div class="social-buttons">
+                        <button type="button" class="btn-social fb">
+                            <i class="fab fa-facebook-f"></i>
+                        </button>
+                        <button type="button" class="btn-social gg">
+                            <i class="fab fa-google"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="signup-link">Chưa có tài khoản? <a href="#" id="openSignupBtn">Đăng ký ngay</a></p>
+            </form>
+        </div>
+    </div>
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <h2>Đăng Ký Tài Khoản</h2>
+                <p>Đăng ký tài khoản thành viên và nhận ngay ưu đãi!</p>
+            </div>
+            <form class="signup-form" id="signupForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signupName">Họ & tên</label>
+                        <input type="text" id="signupName" name="signupName" placeholder="Họ và tên của bạn" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupEmail">Email</label>
+                        <input type="email" id="signupEmail" name="signupEmail" placeholder="Email của bạn" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signupAddress">Địa chỉ</label>
+                        <input type="text" id="signupAddress" name="signupAddress" placeholder="Địa chỉ" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupUsername">Email / Tên đăng nhập</label>
+                        <input type="text" id="signupUsername" name="signupUsername" placeholder="Tên đăng nhập" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signupCCCD">Số CCCD</label>
+                        <input type="text" id="signupCCCD" name="signupCCCD" placeholder="Số CCCD" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPassword">Mật khẩu</label>
+                        <input type="password" id="signupPassword" name="signupPassword" placeholder="Mật khẩu" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signupBirthday">Ngày sinh</label>
+                        <input type="date" id="signupBirthday" name="signupBirthday" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupConfirmPassword">Mật khẩu nhập lại</label>
+                        <input type="password" id="signupConfirmPassword" name="signupConfirmPassword" placeholder="Nhập lại mật khẩu" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signupPhone">Điện thoại</label>
+                        <input type="tel" id="signupPhone" name="signupPhone" placeholder="Số điện thoại" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Giới tính</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="signupGender" value="male" checked>
+                                Nam
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="signupGender" value="female">
+                                Nữ
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Đăng Ký</button>
+                <p class="login-link">Đã có tài khoản? <a href="#" id="openLoginBtn2">Đăng nhập</a></p>
+            </form>
+        </div>
+    </div>
+    <div id="searchResultsModal" class="modal">
+        <div class="modal-content search-modal">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <h2>Kết Quả Tìm Kiếm</h2>
+            </div>
+            <div id="searchResults" class="search-results">
+            </div>
+        </div>
+    </div>
+    <div id="bookingModal" class="modal">
+        <div class="modal-content booking-modal">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <h2>Chọn Ghế - <span id="bookingMovieName">Phim</span></h2>
+            </div>
+            <div class="booking-container">
+                <div class="booking-section">
+                    <h3>Chọn Ngày Chiếu</h3>
+                    <div class="date-picker">
+                        <input type="date" id="showDate" min="" class="date-input">
+                    </div>
+                </div>
+                <div class="booking-section">
+                    <h3>Chọn Giờ Chiếu</h3>
+                    <div id="showtimeList" class="showtime-list">
+                        <p style="color: #999;">Vui lòng chọn ngày để xem giờ chiếu</p>
+                    </div>
+                </div>
+                <div class="booking-section">
+                    <h3>Chọn Ghế</h3>
+                    <div class="screen-label">MÀN HÌNH</div>
+                    <div id="seatMap" class="seat-map">
+                    </div>
+                    <div class="seat-legend">
+                        <div class="legend-item">
+                            <div class="seat seat-available"></div>
+                            <span>Ghế thường</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="seat seat-selected"></div>
+                            <span>Ghế đã chọn</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="seat seat-booked"></div>
+                            <span>Ghế đã bán</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="booking-info">
+                    <div class="info-row">
+                        <span>Số lượng ghế:</span>
+                        <span id="selectedCount">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Đơn giá:</span>
+                        <span>50.000 VND</span>
+                    </div>
+                    <div class="info-row total">
+                        <span>Tổng tiền:</span>
+                        <span id="totalPrice">0 VND</span>
+                    </div>
+                </div>
+                <button class="btn-submit" id="confirmBooking" style="width: 100%; margin-top: 20px;">
+                    Xác Nhận Đặt Vé
+                </button>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
