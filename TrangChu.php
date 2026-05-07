@@ -339,7 +339,7 @@
                     <input type="password" id="loginPassword" name="loginPassword" placeholder="Mật khẩu" required>
                 </div>
                 <div class="form-footer">
-                    <a href="#" class="forgot-password">Quên mật khẩu?</a>
+                    <a href="#" class="forgot-password" id="openForgotPasswordBtn">Quên mật khẩu?</a>
                 </div>
                 <button type="submit" class="btn-submit">Đăng Nhập</button>
                 <div class="social-login">
@@ -437,6 +437,77 @@
             </div>
             <div id="searchResults" class="search-results">
             </div>
+        </div>
+    </div>
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <h2>Quên Mật Khẩu</h2>
+                <p>Nhập email của bạn để đặt lại mật khẩu</p>
+            </div>
+            <form class="forgot-password-form" id="forgotPasswordForm">
+                <div class="form-group">
+                    <label for="forgotEmail">Email / Tên đăng nhập</label>
+                    <input type="text" id="forgotEmail" name="forgotEmail" placeholder="Email hoặc tên đăng nhập" required>
+                </div>
+                <button type="submit" class="btn-submit">Tiếp Tục</button>
+                <p class="login-link">Quay lại <a href="#" id="openLoginBtn3">Đăng nhập</a></p>
+            </form>
+        </div>
+    </div>
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <h2>Đặt Lại Mật Khẩu</h2>
+                <p>Nhập mật khẩu mới của bạn</p>
+            </div>
+            <form class="reset-password-form" id="resetPasswordForm">
+                <div class="form-group">
+                    <label for="newPassword">Mật khẩu mới</label>
+                    <input type="password" id="newPassword" name="newPassword" placeholder="Nhập mật khẩu mới" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewPassword">Xác nhận mật khẩu</label>
+                    <input type="password" id="confirmNewPassword" name="confirmNewPassword" placeholder="Nhập lại mật khẩu mới" required>
+                </div>
+                <button type="submit" class="btn-submit">Xác Nhận</button>
+                <p class="login-link">Quay lại <a href="#" id="openLoginBtn4">Đăng nhập</a></p>
+            </form>
+        </div>
+    </div>
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <h2>Chọn Phương Thức Thanh Toán</h2>
+                <p>Vui lòng chọn hình thức thanh toán của bạn</p>
+            </div>
+            <div class="payment-methods">
+                <div class="payment-option" id="momoPayment">
+                    <div class="payment-icon">
+                        <span class="momo-icon">M</span>
+                    </div>
+                    <h3>Ví MoMo</h3>
+                    <p>Thanh toán qua ứng dụng Momo</p>
+                    <a href="https://momo.vn" target="_blank" class="momo-link" title="Mở Momo">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                    <span class="badge">KHUYÊN DÙNG</span>
+                </div>
+            </div>
+            <div class="payment-info">
+                <p style="text-align: center; color: #666; font-size: 14px; margin-top: 20px;">
+                    Hiện tại chúng tôi chỉ hỗ trợ thanh toán qua Momo
+                </p>
+                <p style="text-align: center; color: #999; font-size: 12px; margin-top: 10px;">
+                    Bạn sẽ được chuyển hướng đến ứng dụng Momo để hoàn tất thanh toán
+                </p>
+            </div>
+            <button class="btn-submit" id="confirmPayment" style="width: 100%; margin-top: 20px;">
+                <i class="fas fa-credit-card"></i> Tiếp Tục Thanh Toán Momo
+            </button>
         </div>
     </div>
     <div id="bookingModal" class="modal">

@@ -29,7 +29,7 @@ let bookingState = {
     pricePerSeat: 50000
 };
 
-// Bố cục ghế (10 hàng x 15 cột)
+// Bố cục ghế (6 hàng x 15 cột)
 const seatLayout = [
     ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'E', 'A', 'A', 'A', 'A', 'A', 'A', 'A'],
     ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'E', 'A', 'A', 'A', 'A', 'A', 'A', 'A'],
@@ -38,7 +38,23 @@ const seatLayout = [
     ['A', 'A', 'B', 'B', 'B', 'B', 'B', 'E', 'B', 'B', 'B', 'B', 'B', 'A', 'A'],
     ['A', 'A', 'B', 'B', 'B', 'B', 'B', 'E', 'B', 'B', 'B', 'B', 'B', 'A', 'A'],
 ];
-const bookedSeats = [];
+
+// Lưu trữ ghế đã đặt cho mỗi phòng: "movieName|date|showtime" => []
+const bookedSeatsByRoom = {};
+
+// Hàm để lấy key phòng (định danh duy nhất cho mỗi phòng)
+function getRoomKey(movieName, date, showtime) {
+    return `${movieName}|${date}|${showtime}`;
+}
+
+// Hàm để lấy danh sách ghế đã đặt của một phòng
+function getBookedSeatsForRoom(movieName, date, showtime) {
+    const key = getRoomKey(movieName, date, showtime);
+    if (!bookedSeatsByRoom[key]) {
+        bookedSeatsByRoom[key] = [];
+    }
+    return bookedSeatsByRoom[key];
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize
@@ -56,6 +72,7 @@ function initModals() {
     const loginModal = document.getElementById('loginModal');
     const signupModal = document.getElementById('signupModal');
     const searchModal = document.getElementById('searchResultsModal');
+    const forgotPasswordModal = document.getElementById('forgotPasswordModal');
     const loginBtn = document.getElementById('openLoginBtn');
     const closeButtons = document.querySelectorAll('.close');
     
@@ -84,6 +101,8 @@ function initModals() {
     // Toggle between login and signup
     const openSignupBtn = document.getElementById('openSignupBtn');
     const openLoginBtn2 = document.getElementById('openLoginBtn2');
+    const openForgotPasswordBtn = document.getElementById('openForgotPasswordBtn');
+    const openLoginBtn3 = document.getElementById('openLoginBtn3');
     
     if (openSignupBtn) {
         openSignupBtn.addEventListener('click', (e) => {
@@ -97,6 +116,32 @@ function initModals() {
         openLoginBtn2.addEventListener('click', (e) => {
             e.preventDefault();
             closeModal(signupModal);
+            openModal(loginModal);
+        });
+    }
+    
+    // Forgot password modal
+    if (openForgotPasswordBtn) {
+        openForgotPasswordBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeModal(loginModal);
+            openModal(forgotPasswordModal);
+        });
+    }
+    
+    if (openLoginBtn3) {
+        openLoginBtn3.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeModal(forgotPasswordModal);
+            openModal(loginModal);
+        });
+    }
+    
+    const openLoginBtn4 = document.getElementById('openLoginBtn4');
+    if (openLoginBtn4) {
+        openLoginBtn4.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeModal(document.getElementById('resetPasswordModal'));
             openModal(loginModal);
         });
     }
@@ -114,6 +159,8 @@ function closeModal(modal) {
 function initFormHandlers() {
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    const resetPasswordForm = document.getElementById('resetPasswordForm');
     
     if (loginForm) {
         loginForm.addEventListener('submit', handleLoginSubmit);
@@ -121,6 +168,14 @@ function initFormHandlers() {
     
     if (signupForm) {
         signupForm.addEventListener('submit', handleSignupSubmit);
+    }
+    
+    if (forgotPasswordForm) {
+        forgotPasswordForm.addEventListener('submit', handleForgotPasswordSubmit);
+    }
+    
+    if (resetPasswordForm) {
+        resetPasswordForm.addEventListener('submit', handleResetPasswordSubmit);
     }
 }
 
@@ -154,6 +209,45 @@ function handleSignupSubmit(e) {
     document.getElementById('signupModal').classList.remove('active');
 }
 
+function handleForgotPasswordSubmit(e) {
+    e.preventDefault();
+    const email = document.getElementById('forgotEmail').value;
+    
+    if (email) {
+        // Chuyển sang modal đặt lại mật khẩu
+        document.getElementById('forgotPasswordModal').classList.remove('active');
+        document.getElementById('resetPasswordForm').reset();
+        openModal(document.getElementById('resetPasswordModal'));
+    } else {
+        alert('Vui lòng nhập email hoặc tên đăng nhập!');
+    }
+}
+
+function handleResetPasswordSubmit(e) {
+    e.preventDefault();
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+    
+    if (newPassword !== confirmNewPassword) {
+        alert('Mật khẩu không trùng khớp!');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        alert('Mật khẩu phải có ít nhất 6 ký tự!');
+        return;
+    }
+    
+    alert('Đặt lại mật khẩu thành công!\n\nBây giờ bạn có thể đăng nhập với mật khẩu mới.');
+    document.getElementById('resetPasswordForm').reset();
+    document.getElementById('resetPasswordModal').classList.remove('active');
+    
+    // Mở lại modal đăng nhập
+    setTimeout(() => {
+        openModal(document.getElementById('loginModal'));
+    }, 500);
+}
+
 // ===== BOOKING MODAL HANDLERS =====
 function initBookingModal() {
     const showDateInput = document.getElementById('showDate');
@@ -184,12 +278,8 @@ function initBookingModal() {
             return;
         }
         
-        const totalPrice = bookingState.selectedSeats.length * bookingState.pricePerSeat;
-        alert(`Đặt vé thành công!\n\nPhim: ${bookingState.selectedMovie}\nNgày: ${bookingState.selectedDate}\nGiờ: ${bookingState.selectedShowtime}\nGhế: ${bookingState.selectedSeats.join(', ')}\nTổng tiền: ${totalPrice.toLocaleString()} VND`);
-        
-        // Reset
-        document.getElementById('bookingModal').classList.remove('active');
-        resetBookingState();
+        // Hiển thị modal chọn phương thức thanh toán
+        openPaymentModal();
     });
 }
 
@@ -208,6 +298,9 @@ function populateShowtimes(date) {
             document.querySelectorAll('.showtime-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             bookingState.selectedShowtime = showtime.time;
+            // Refresh seat map khi thay đổi giờ chiếu
+            resetSeatSelection();
+            initSeatMap();
         });
         
         showtimeList.appendChild(btn);
@@ -221,6 +314,13 @@ function initSeatMap() {
     
     const rows = ['A', 'B', 'C', 'D', 'E', 'F'];
     
+    // Lấy danh sách ghế đã đặt của phòng hiện tại
+    const bookedSeatsForCurrentRoom = getBookedSeatsForRoom(
+        bookingState.selectedMovie,
+        bookingState.selectedDate,
+        bookingState.selectedShowtime
+    );
+    
     seatLayout.forEach((row, rowIndex) => {
         row.forEach((seatType, colIndex) => {
             const seatName = `${rows[rowIndex]}${colIndex + 1}`;
@@ -230,7 +330,7 @@ function initSeatMap() {
             if (seatType === 'E') {
                 seatDiv.className = 'seat seat-empty';
                 seatDiv.textContent = '';
-            } else if (bookedSeats.includes(seatName)) {
+            } else if (bookedSeatsForCurrentRoom.includes(seatName)) {
                 seatDiv.className = 'seat seat-booked';
                 seatDiv.textContent = seatName;
             } else {
@@ -396,7 +496,13 @@ function handleBooking(e) {
     document.getElementById('bookingMovieName').textContent = movieName;
     
     openModal(document.getElementById('bookingModal'));
-    initSeatMap();
+    
+    // Đảm bảo seat map và showtime được load
+    setTimeout(() => {
+        initSeatMap();
+        const today = new Date().toISOString().split('T')[0];
+        populateShowtimes(today);
+    }, 100);
 }
 
 // ===== MOVIE CARDS =====
@@ -451,6 +557,72 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+
+// ===== PAYMENT HANDLERS =====
+function openPaymentModal() {
+    const paymentModal = document.getElementById('paymentModal');
+    const bookingModal = document.getElementById('bookingModal');
+    
+    if (!paymentModal) {
+        alert('Lỗi: Modal thanh toán không tìm thấy!');
+        return;
+    }
+    
+    closeModal(bookingModal);
+    
+    // Đợi modal booking đóng rồi mở modal thanh toán
+    setTimeout(() => {
+        openModal(paymentModal);
+        
+        // Setup payment confirmation
+        const confirmPaymentBtn = document.getElementById('confirmPayment');
+        if (confirmPaymentBtn && !confirmPaymentBtn.hasListener) {
+            confirmPaymentBtn.addEventListener('click', handlePaymentConfirm);
+            confirmPaymentBtn.hasListener = true;
+        }
+        
+        // Handle Momo payment selection
+        const momoPayment = document.getElementById('momoPayment');
+        if (momoPayment && !momoPayment.hasListener) {
+            momoPayment.addEventListener('click', function() {
+                document.querySelectorAll('.payment-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                this.classList.add('selected');
+            });
+            momoPayment.classList.add('selected');
+            momoPayment.hasListener = true;
+        }
+    }, 300);
+}
+
+function handlePaymentConfirm() {
+    const totalPrice = bookingState.selectedSeats.length * bookingState.pricePerSeat;
+    
+    alert(`Đặt vé thành công!\n\nPhim: ${bookingState.selectedMovie}\nNgày: ${bookingState.selectedDate}\nGiờ: ${bookingState.selectedShowtime}\nGhế: ${bookingState.selectedSeats.join(', ')}\nTổng tiền: ${totalPrice.toLocaleString()} VND\n\nPhương thức thanh toán: Momo\n\nBạn sẽ được chuyển hướng đến Momo để hoàn tất thanh toán`);
+    
+    // Thêm ghế đã đặt vào danh sách ghế đã bán của phòng này
+    const bookedSeatsForCurrentRoom = getBookedSeatsForRoom(
+        bookingState.selectedMovie,
+        bookingState.selectedDate,
+        bookingState.selectedShowtime
+    );
+    
+    bookingState.selectedSeats.forEach(seat => {
+        if (!bookedSeatsForCurrentRoom.includes(seat)) {
+            bookedSeatsForCurrentRoom.push(seat);
+        }
+    });
+    
+    // Mở link Momo app hoặc website
+    setTimeout(() => {
+        window.open('https://momo.vn', '_blank');
+    }, 500);
+    
+    // Reset và đóng modal
+    document.getElementById('paymentModal').classList.remove('active');
+    resetBookingState();
+}
 
 // ===== UTILITY FUNCTIONS =====
 function updateFooterYear() {
