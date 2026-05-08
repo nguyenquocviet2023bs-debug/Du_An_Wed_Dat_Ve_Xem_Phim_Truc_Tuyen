@@ -278,8 +278,8 @@ function initBookingModal() {
             return;
         }
         
-        // Hiển thị modal chọn phương thức thanh toán
-        openPaymentModal();
+        // Xác nhận đặt vé
+        handleBookingConfirm();
     });
 }
 
@@ -558,48 +558,11 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// ===== PAYMENT HANDLERS =====
-function openPaymentModal() {
-    const paymentModal = document.getElementById('paymentModal');
-    const bookingModal = document.getElementById('bookingModal');
-    
-    if (!paymentModal) {
-        alert('Lỗi: Modal thanh toán không tìm thấy!');
-        return;
-    }
-    
-    closeModal(bookingModal);
-    
-    // Đợi modal booking đóng rồi mở modal thanh toán
-    setTimeout(() => {
-        openModal(paymentModal);
-        
-        // Setup payment confirmation
-        const confirmPaymentBtn = document.getElementById('confirmPayment');
-        if (confirmPaymentBtn && !confirmPaymentBtn.hasListener) {
-            confirmPaymentBtn.addEventListener('click', handlePaymentConfirm);
-            confirmPaymentBtn.hasListener = true;
-        }
-        
-        // Handle Momo payment selection
-        const momoPayment = document.getElementById('momoPayment');
-        if (momoPayment && !momoPayment.hasListener) {
-            momoPayment.addEventListener('click', function() {
-                document.querySelectorAll('.payment-option').forEach(option => {
-                    option.classList.remove('selected');
-                });
-                this.classList.add('selected');
-            });
-            momoPayment.classList.add('selected');
-            momoPayment.hasListener = true;
-        }
-    }, 300);
-}
-
-function handlePaymentConfirm() {
+// ===== BOOKING CONFIRMATION =====
+function handleBookingConfirm() {
     const totalPrice = bookingState.selectedSeats.length * bookingState.pricePerSeat;
     
-    alert(`Đặt vé thành công!\n\nPhim: ${bookingState.selectedMovie}\nNgày: ${bookingState.selectedDate}\nGiờ: ${bookingState.selectedShowtime}\nGhế: ${bookingState.selectedSeats.join(', ')}\nTổng tiền: ${totalPrice.toLocaleString()} VND\n\nPhương thức thanh toán: Momo\n\nBạn sẽ được chuyển hướng đến Momo để hoàn tất thanh toán`);
+    alert(`Đặt vé thành công!\n\nPhim: ${bookingState.selectedMovie}\nNgày: ${bookingState.selectedDate}\nGiờ: ${bookingState.selectedShowtime}\nGhế: ${bookingState.selectedSeats.join(', ')}\nTổng tiền: ${totalPrice.toLocaleString()} VND`);
     
     // Thêm ghế đã đặt vào danh sách ghế đã bán của phòng này
     const bookedSeatsForCurrentRoom = getBookedSeatsForRoom(
@@ -614,13 +577,8 @@ function handlePaymentConfirm() {
         }
     });
     
-    // Mở link Momo app hoặc website
-    setTimeout(() => {
-        window.open('https://momo.vn', '_blank');
-    }, 500);
-    
     // Reset và đóng modal
-    document.getElementById('paymentModal').classList.remove('active');
+    document.getElementById('bookingModal').classList.remove('active');
     resetBookingState();
 }
 

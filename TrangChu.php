@@ -477,39 +477,7 @@
             </form>
         </div>
     </div>
-    <div id="paymentModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div class="modal-header">
-                <h2>Chọn Phương Thức Thanh Toán</h2>
-                <p>Vui lòng chọn hình thức thanh toán của bạn</p>
-            </div>
-            <div class="payment-methods">
-                <div class="payment-option" id="momoPayment">
-                    <div class="payment-icon">
-                        <span class="momo-icon">M</span>
-                    </div>
-                    <h3>Ví MoMo</h3>
-                    <p>Thanh toán qua ứng dụng Momo</p>
-                    <a href="https://momo.vn" target="_blank" class="momo-link" title="Mở Momo">
-                        <i class="fas fa-external-link-alt"></i>
-                    </a>
-                    <span class="badge">KHUYÊN DÙNG</span>
-                </div>
-            </div>
-            <div class="payment-info">
-                <p style="text-align: center; color: #666; font-size: 14px; margin-top: 20px;">
-                    Hiện tại chúng tôi chỉ hỗ trợ thanh toán qua Momo
-                </p>
-                <p style="text-align: center; color: #999; font-size: 12px; margin-top: 10px;">
-                    Bạn sẽ được chuyển hướng đến ứng dụng Momo để hoàn tất thanh toán
-                </p>
-            </div>
-            <button class="btn-submit" id="confirmPayment" style="width: 100%; margin-top: 20px;">
-                <i class="fas fa-credit-card"></i> Tiếp Tục Thanh Toán Momo
-            </button>
-        </div>
-    </div>
+
     <div id="bookingModal" class="modal">
         <div class="modal-content booking-modal">
             <span class="close">&times;</span>
