@@ -1,3 +1,44 @@
+// ===== SESSION MANAGEMENT =====
+let isLoggedIn = false;
+let currentUser = null;
+
+// Check if user is logged in from localStorage
+function checkUserSession() {
+    const user = localStorage.getItem('currentUser');
+    if (user) {
+        isLoggedIn = true;
+        currentUser = JSON.parse(user);
+        showMainContent();
+    } else {
+        isLoggedIn = false;
+        currentUser = null;
+        showLoginModal();
+    }
+}
+
+// Show main content
+function showMainContent() {
+    document.getElementById('mainContent').style.display = 'block';
+    document.getElementById('loginModal').classList.remove('active');
+    document.getElementById('signupModal').classList.remove('active');
+    document.getElementById('logoutBtn').style.display = 'block';
+}
+
+// Show login modal
+function showLoginModal() {
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('loginModal').classList.add('active');
+    document.getElementById('logoutBtn').style.display = 'none';
+}
+
+// Logout
+function handleLogout() {
+    localStorage.removeItem('currentUser');
+    isLoggedIn = false;
+    currentUser = null;
+    showLoginModal();
+}
+
 // Danh sách phim đang chiếu
 const moviesData = [
     { id: 1, name: 'Heo 5 Móng', genre: 'Kinh dị', rating: 8.3 },
@@ -57,6 +98,9 @@ function getBookedSeatsForRoom(movieName, date, showtime) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Check user session first
+    checkUserSession();
+    
     // Initialize
     initNavigation();
     initBookingButtons();
@@ -65,6 +109,17 @@ document.addEventListener('DOMContentLoaded', function() {
     initModals();
     initFormHandlers();
     initBookingModal();
+    
+    // Setup logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                handleLogout();
+            }
+        });
+    }
 });
 
 // ===== MODAL MANAGEMENT =====
@@ -185,9 +240,17 @@ function handleLoginSubmit(e) {
     const password = document.getElementById('loginPassword').value;
     
     if (email && password) {
-        alert('Đăng nhập thành công! Email: ' + email);
+        // Lưu thông tin user vào localStorage
+        const user = { email: email, loginTime: new Date().toLocaleString() };
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        alert('Đăng nhập thành công! Chào mừng ' + email);
         document.getElementById('loginForm').reset();
-        document.getElementById('loginModal').classList.remove('active');
+        
+        // Show main content and hide login modal
+        isLoggedIn = true;
+        currentUser = user;
+        showMainContent();
     } else {
         alert('Vui lòng điền đầy đủ thông tin!');
     }
@@ -204,9 +267,19 @@ function handleSignupSubmit(e) {
     }
     
     const name = document.getElementById('signupName').value;
+    const email = document.getElementById('signupEmail').value;
+    
+    // Lưu thông tin user vào localStorage
+    const user = { name: name, email: email, signupTime: new Date().toLocaleString() };
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    
     alert('Đăng ký thành công! Chào mừng ' + name);
     document.getElementById('signupForm').reset();
-    document.getElementById('signupModal').classList.remove('active');
+    
+    // Show main content and hide signup modal
+    isLoggedIn = true;
+    currentUser = user;
+    showMainContent();
 }
 
 function handleForgotPasswordSubmit(e) {

@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <!-- Login Modal shown first on page load -->
+    <div id="mainContent" class="main-content" style="display: none;">
     <header class="header">
         <div class="container">
             <div class="header-top">
@@ -25,7 +27,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
-                    <button class="login-btn" id="openLoginBtn">Đăng Nhập</button>
+                    <button class="login-btn" id="logoutBtn">Đăng Xuất</button>
                     <div class="vip-badge">
                         <i class="fas fa-star"></i>
                     </div>
@@ -322,6 +324,7 @@
             </div>
         </div>
     </footer>
+    </div> <!-- End mainContent -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
