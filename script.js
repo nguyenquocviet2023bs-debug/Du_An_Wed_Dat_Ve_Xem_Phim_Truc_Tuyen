@@ -2,16 +2,30 @@
 let isLoggedIn = false;
 let currentUser = null;
 
-// Check if user is logged in from localStorage
-function checkUserSession() {
-    const user = localStorage.getItem('currentUser');
-    if (user) {
-        isLoggedIn = true;
-        currentUser = JSON.parse(user);
-        showMainContent();
-    } else {
-        isLoggedIn = false;
-        currentUser = null;
+// Check if user is logged in from server session
+async function checkUserSession() {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'checkSession');
+        
+        const response = await fetch('logicDB.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.isLoggedIn) {
+            isLoggedIn = true;
+            currentUser = data.user;
+            showMainContent();
+        } else {
+            isLoggedIn = false;
+            currentUser = null;
+            showLoginModal();
+        }
+    } catch (error) {
+        console.error('Error checking session:', error);
         showLoginModal();
     }
 }
@@ -33,10 +47,31 @@ function showLoginModal() {
 
 // Logout
 function handleLogout() {
-    localStorage.removeItem('currentUser');
-    isLoggedIn = false;
-    currentUser = null;
-    showLoginModal();
+    // Gửi yêu cầu logout tới server
+    const formData = new FormData();
+    formData.append('action', 'logout');
+    
+    fetch('logicDB.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Xóa thông tin user từ localStorage
+        localStorage.removeItem('currentUser');
+        isLoggedIn = false;
+        currentUser = null;
+        showLoginModal();
+        alert(data.message);
+    })
+    .catch(error => {
+        console.error('Lỗi:', error);
+        // Nếu có lỗi, vẫn xóa localStorage
+        localStorage.removeItem('currentUser');
+        isLoggedIn = false;
+        currentUser = null;
+        showLoginModal();
+    });
 }
 
 // Danh sách phim đang chiếu
@@ -69,6 +104,8 @@ let bookingState = {
     selectedSeats: [],
     pricePerSeat: 50000
 };
+
+
 
 // Bố cục ghế (6 hàng x 15 cột)
 const seatLayout = [
@@ -236,70 +273,116 @@ function initFormHandlers() {
 
 function handleLoginSubmit(e) {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
+    const username = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
     
-    if (email && password) {
-        // Lưu thông tin user vào localStorage
-        const user = { email: email, loginTime: new Date().toLocaleString() };
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        
-        alert('Đăng nhập thành công! Chào mừng ' + email);
-        document.getElementById('loginForm').reset();
-        
-        // Show main content and hide login modal
-        isLoggedIn = true;
-        currentUser = user;
-        showMainContent();
-    } else {
+    if (!username || !password) {
         alert('Vui lòng điền đầy đủ thông tin!');
+        return;
     }
+    
+    const formData = new FormData();
+    formData.append('action', 'login');
+    formData.append('username', username);
+    formData.append('password', password);
+    
+    fetch('logicDB.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Đăng nhập thành công!');
+            document.getElementById('loginForm').reset();
+            isLoggedIn = true;
+            showMainContent();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Lỗi:', error);
+        alert('Có lỗi xảy ra: ' + error.message);
+    });
 }
 
 function handleSignupSubmit(e) {
     e.preventDefault();
-    const password = document.getElementById('signupPassword').value;
-    const confirmPassword = document.getElementById('signupConfirmPassword').value;
+    const password = document.getElementById('signupPassword').value.trim();
+    const confirmPassword = document.getElementById('signupConfirmPassword').value.trim();
     
     if (password !== confirmPassword) {
         alert('Mật khẩu không trùng khớp!');
         return;
     }
     
-    const name = document.getElementById('signupName').value;
-    const email = document.getElementById('signupEmail').value;
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const phone = document.getElementById('signupPhone')?.value.trim() || '';
     
-    // Lưu thông tin user vào localStorage
-    const user = { name: name, email: email, signupTime: new Date().toLocaleString() };
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    if (!name || !email || !phone || !password) {
+        alert('Vui lòng điền đầy đủ thông tin!');
+        return;
+    }
     
-    alert('Đăng ký thành công! Chào mừng ' + name);
-    document.getElementById('signupForm').reset();
+    const formData = new FormData();
+    formData.append('action', 'signup');
+    formData.append('ho_ten', name);
+    formData.append('email', email);
+    formData.append('dien_thoai', phone);
+    formData.append('password', password);
     
-    // Show main content and hide signup modal
-    isLoggedIn = true;
-    currentUser = user;
-    showMainContent();
+    fetch('logicDB.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Đăng ký thành công! Chào mừng bạn');
+            document.getElementById('signupForm').reset();
+            isLoggedIn = true;
+            
+            // Close signup modal and show main content
+            document.getElementById('signupModal').classList.remove('active');
+            showMainContent();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Lỗi:', error);
+        alert('Có lỗi xảy ra, vui lòng thử lại!');
+    });
 }
 
 function handleForgotPasswordSubmit(e) {
     e.preventDefault();
-    const email = document.getElementById('forgotEmail').value;
+    const email = document.getElementById('forgotEmail').value.trim();
     
-    if (email) {
-        // Chuyển sang modal đặt lại mật khẩu
-        document.getElementById('forgotPasswordModal').classList.remove('active');
-        document.getElementById('resetPasswordForm').reset();
-        openModal(document.getElementById('resetPasswordModal'));
-    } else {
+    if (!email) {
         alert('Vui lòng nhập email hoặc tên đăng nhập!');
+        return;
     }
+    
+    // Chuyển sang modal đặt lại mật khẩu
+    document.getElementById('forgotPasswordModal').classList.remove('active');
+    // Lưu email vào input hidden để dùng ở form reset
+    document.getElementById('resetPasswordForm').dataset.emailOrPhone = email;
+    openModal(document.getElementById('resetPasswordModal'));
 }
 
 function handleResetPasswordSubmit(e) {
     e.preventDefault();
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+    const newPassword = document.getElementById('newPassword').value.trim();
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value.trim();
+    const emailOrPhone = document.getElementById('resetPasswordForm').dataset.emailOrPhone;
+    
+    if (!newPassword || !confirmNewPassword) {
+        alert('Vui lòng điền đầy đủ mật khẩu!');
+        return;
+    }
     
     if (newPassword !== confirmNewPassword) {
         alert('Mật khẩu không trùng khớp!');
@@ -311,14 +394,35 @@ function handleResetPasswordSubmit(e) {
         return;
     }
     
-    alert('Đặt lại mật khẩu thành công!\n\nBây giờ bạn có thể đăng nhập với mật khẩu mới.');
-    document.getElementById('resetPasswordForm').reset();
-    document.getElementById('resetPasswordModal').classList.remove('active');
+    // Gửi yêu cầu reset password lên server
+    const formData = new FormData();
+    formData.append('action', 'resetPassword');
+    formData.append('email_or_phone', emailOrPhone);
+    formData.append('new_password', newPassword);
     
-    // Mở lại modal đăng nhập
-    setTimeout(() => {
-        openModal(document.getElementById('loginModal'));
-    }, 500);
+    fetch('logicDB.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Đặt lại mật khẩu thành công!\n\nBây giờ bạn có thể đăng nhập với mật khẩu mới.');
+            document.getElementById('resetPasswordForm').reset();
+            document.getElementById('resetPasswordModal').classList.remove('active');
+            
+            // Mở lại modal đăng nhập
+            setTimeout(() => {
+                openModal(document.getElementById('loginModal'));
+            }, 500);
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Lỗi:', error);
+        alert('Có lỗi xảy ra, vui lòng thử lại!');
+    });
 }
 
 // ===== BOOKING MODAL HANDLERS =====
@@ -379,6 +483,8 @@ function populateShowtimes(date) {
         showtimeList.appendChild(btn);
     });
 }
+
+
 
 function initSeatMap() {
     const seatMap = document.getElementById('seatMap');
@@ -505,21 +611,44 @@ function displaySearchResults(results, query) {
     }
     
     resultsContainer.innerHTML = results.map(movie => `
-        <div class="search-result-item" onclick="selectMovie('${movie.name}')">
+        <div class="search-result-item">
             <div class="search-result-poster">
                 <i class="fas fa-film" style="font-size: 60px; color: #ff6b35; display: flex; align-items: center; justify-content: center; height: 100%;"></i>
             </div>
             <div class="search-result-name">${movie.name}</div>
             <div class="search-result-info">${movie.genre} - ${movie.rating}/10</div>
-            <button style="background: #ff6b35; color: white; padding: 8px 15px; border-radius: 5px; margin-top: 10px; font-size: 12px; width: 100%;">
+            <button class="search-result-book-btn" data-movie-name="${movie.name}" style="background: #ff6b35; color: white; padding: 8px 15px; border-radius: 5px; margin-top: 10px; font-size: 12px; width: 100%;">
                 Mua vé
             </button>
         </div>
     `).join('');
+    
+    // Attach click handlers to all "Mua vé" buttons in search results
+    document.querySelectorAll('.search-result-book-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const movieName = this.getAttribute('data-movie-name');
+            handleSearchResultBooking(movieName);
+        });
+    });
 }
 
-function selectMovie(movieName) {
-    alert('Bạn sẽ mua vé xem: ' + movieName);
+function handleSearchResultBooking(movieName) {
+    // Close search results modal
+    document.getElementById('searchResultsModal').classList.remove('active');
+    
+    // Set selected movie and open booking modal
+    bookingState.selectedMovie = movieName;
+    document.getElementById('bookingMovieName').textContent = movieName;
+    
+    openModal(document.getElementById('bookingModal'));
+    
+    // Initialize seat map and showtimes
+    setTimeout(() => {
+        initSeatMap();
+        const today = new Date().toISOString().split('T')[0];
+        populateShowtimes(today);
+    }, 100);
 }
 
 // ===== NAVIGATION =====
@@ -633,26 +762,56 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 
 // ===== BOOKING CONFIRMATION =====
 function handleBookingConfirm() {
+    if (!isLoggedIn) {
+        alert('Vui lòng đăng nhập để đặt vé!');
+        openModal(document.getElementById('loginModal'));
+        return;
+    }
+    
     const totalPrice = bookingState.selectedSeats.length * bookingState.pricePerSeat;
+    const seatsStr = bookingState.selectedSeats.join(', ');
     
-    alert(`Đặt vé thành công!\n\nPhim: ${bookingState.selectedMovie}\nNgày: ${bookingState.selectedDate}\nGiờ: ${bookingState.selectedShowtime}\nGhế: ${bookingState.selectedSeats.join(', ')}\nTổng tiền: ${totalPrice.toLocaleString()} VND`);
+    const formData = new FormData();
+    formData.append('action', 'booking');
+    formData.append('ten_phim', bookingState.selectedMovie);
+    formData.append('ngay_chieu', bookingState.selectedDate);
+    formData.append('gio_chieu', bookingState.selectedShowtime);
+    formData.append('so_ghe', seatsStr);
+    formData.append('gia_ve', totalPrice);
     
-    // Thêm ghế đã đặt vào danh sách ghế đã bán của phòng này
-    const bookedSeatsForCurrentRoom = getBookedSeatsForRoom(
-        bookingState.selectedMovie,
-        bookingState.selectedDate,
-        bookingState.selectedShowtime
-    );
-    
-    bookingState.selectedSeats.forEach(seat => {
-        if (!bookedSeatsForCurrentRoom.includes(seat)) {
-            bookedSeatsForCurrentRoom.push(seat);
+    fetch('logicDB.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Đặt vé thành công!\n\nPhim: ${bookingState.selectedMovie}\nNgày chiếu: ${bookingState.selectedDate}\nGiờ chiếu: ${bookingState.selectedShowtime}\nGhế: ${seatsStr}\nTổng tiền: ${totalPrice.toLocaleString()} VND`);
+            
+            // Thêm ghế vào danh sách đã đặt
+            const bookedSeatsForCurrentRoom = getBookedSeatsForRoom(
+                bookingState.selectedMovie,
+                bookingState.selectedDate,
+                bookingState.selectedShowtime
+            );
+            
+            bookingState.selectedSeats.forEach(seat => {
+                if (!bookedSeatsForCurrentRoom.includes(seat)) {
+                    bookedSeatsForCurrentRoom.push(seat);
+                }
+            });
+            
+            // Đóng modal và reset
+            document.getElementById('bookingModal').classList.remove('active');
+            resetBookingState();
+        } else {
+            alert('Lỗi: ' + data.message);
         }
+    })
+    .catch(error => {
+        console.error('Lỗi:', error);
+        alert('Có lỗi xảy ra, vui lòng thử lại!');
     });
-    
-    // Reset và đóng modal
-    document.getElementById('bookingModal').classList.remove('active');
-    resetBookingState();
 }
 
 // ===== UTILITY FUNCTIONS =====
