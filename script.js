@@ -135,6 +135,13 @@ function getBookedSeatsForRoom(movieName, date, showtime) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    if (window.AuthLogin) {
+        window.AuthLogin.onSuccess = function () {
+            isLoggedIn = true;
+            showMainContent();
+        };
+    }
+
     // Check user session first
     checkUserSession();
     
@@ -254,10 +261,6 @@ function initFormHandlers() {
     const forgotPasswordForm = document.getElementById('forgotPasswordForm');
     const resetPasswordForm = document.getElementById('resetPasswordForm');
     
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLoginSubmit);
-    }
-    
     if (signupForm) {
         signupForm.addEventListener('submit', handleSignupSubmit);
     }
@@ -269,42 +272,6 @@ function initFormHandlers() {
     if (resetPasswordForm) {
         resetPasswordForm.addEventListener('submit', handleResetPasswordSubmit);
     }
-}
-
-function handleLoginSubmit(e) {
-    e.preventDefault();
-    const username = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value.trim();
-    
-    if (!username || !password) {
-        alert('Vui lòng điền đầy đủ thông tin!');
-        return;
-    }
-    
-    const formData = new FormData();
-    formData.append('action', 'login');
-    formData.append('username', username);
-    formData.append('password', password);
-    
-    fetch('logicDB.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Đăng nhập thành công!');
-            document.getElementById('loginForm').reset();
-            isLoggedIn = true;
-            showMainContent();
-        } else {
-            alert(data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Lỗi:', error);
-        alert('Có lỗi xảy ra: ' + error.message);
-    });
 }
 
 function handleSignupSubmit(e) {
@@ -654,18 +621,22 @@ function handleSearchResultBooking(movieName) {
 // ===== NAVIGATION =====
 function initNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            navLinks.forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
+    const currentPage = window.location.pathname.split('/').pop() || 'TrangChu.php';
     
-    // Set first nav link as active by default
-    if (navLinks.length > 0) {
-        navLinks[0].classList.add('active');
-    }
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && href !== '#') {
+            if (href === currentPage || (currentPage === '' && href === 'TrangChu.php')) {
+                link.classList.add('active');
+            }
+        } else {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                navLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
+        }
+    });
 }
 
 // ===== BOOKING BUTTONS =====

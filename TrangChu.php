@@ -17,7 +17,9 @@
                     <span>Cinema Group 11</span>
                 </div>
                 <nav class="navbar">
-                    <a href="#" class="nav-link">Trang chủ</a>
+                    <a href="TrangChu.php" class="nav-link active">Trang chủ</a>
+                    <a href="VeDatVe.php" class="nav-link">Vé/Đặt vé</a>
+                    <a href="HoatDong.php" class="nav-link">Hoạt động</a>
                 </nav>
                 <div class="header-right">
                     <div class="search-container">
@@ -329,7 +331,7 @@
             <span class="close">&times;</span>
             <div class="modal-header">
                 <h2>Đăng Nhập</h2>
-                <p>Đăng nhập với tài khoản của bạn!</p>
+                <p>Đăng nhập với tài khoản của bạn! Sau khi nhập mật khẩu, mã xác thực 6 số sẽ gửi qua Gmail.</p>
             </div>
             <form class="login-form" id="loginForm">
                 <div class="form-group">
@@ -359,6 +361,7 @@
             </form>
         </div>
     </div>
+    <?php include 'otp-modal.php'; ?>
     <div id="signupModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -539,6 +542,7 @@
             </div>
         </div>
     </div>
+    <script src="auth-login.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
