@@ -16,11 +16,12 @@
                     <i class="fas fa-film"></i>
                     <span>Cinema Group 11</span>
                 </div>
-                <nav class="navbar">
-                    <a href="TrangChu.php" class="nav-link active">Trang chủ</a>
-                    <a href="VeDatVe.php" class="nav-link">Vé/Đặt vé</a>
-                    <a href="HoatDong.php" class="nav-link">Hoạt động</a>
-                </nav>
+                    <nav class="navbar">
+                        <a href="TrangChu.php" class="nav-link active">Trang chủ</a>
+                        <a href="VeDatVe.php" class="nav-link">Vé/Đặt vé</a>
+                        <a href="HoatDong.php" class="nav-link">Hoạt động</a>
+                        <a href="QuanTri.php" class="nav-link" id="navAdminLink" style="display:none" title="Chỉ hiện với tài khoản quản trị">Quản trị</a>
+                    </nav>
                 <div class="header-right">
                     <div class="search-container">
                         <input type="text" class="search-input" placeholder="Tìm tên phim...">

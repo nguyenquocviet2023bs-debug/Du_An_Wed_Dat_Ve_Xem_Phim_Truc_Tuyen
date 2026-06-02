@@ -42,6 +42,30 @@ try {
             FROM bookings
             WHERE ngay_chieu IS NOT NULL AND gio_chieu IS NOT NULL");
     }
+
+    // Phân quyền: user | admin; khóa tài khoản (1 = bị khóa)
+    $stmt = $pdo->query("SHOW COLUMNS FROM users LIKE 'vai_tro'");
+    if ($stmt->rowCount() === 0) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN vai_tro VARCHAR(20) NOT NULL DEFAULT 'user'");
+    }
+    $stmt = $pdo->query("SHOW COLUMNS FROM users LIKE 'tai_khoan_bi_khoa'");
+    if ($stmt->rowCount() === 0) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN tai_khoan_bi_khoa TINYINT(1) NOT NULL DEFAULT 0");
+    }
+
+    // Tài khoản quản trị mặc định (chỉ tạo nếu chưa có email này)
+    $adminEmail = 'admin1@admin.com';
+    $adminPhone = '0999999001';
+    $chk = $pdo->prepare("SELECT dien_thoai FROM users WHERE email = ? LIMIT 1");
+    $chk->execute([$adminEmail]);
+    if (!$chk->fetch()) {
+        $hash = password_hash('1122334455', PASSWORD_DEFAULT);
+        $ins = $pdo->prepare(
+            "INSERT INTO users (ho_ten, dien_thoai, email, ngay_sinh, mat_khau, vai_tro, tai_khoan_bi_khoa, created_at)
+             VALUES (?, ?, ?, '2000-01-01', ?, 'admin', 0, NOW())"
+        );
+        $ins->execute(['Quản trị viên', $adminPhone, $adminEmail, $hash]);
+    }
 } catch (PDOException $e) {
     header('Content-Type: application/json; charset=utf-8');
     http_response_code(500);

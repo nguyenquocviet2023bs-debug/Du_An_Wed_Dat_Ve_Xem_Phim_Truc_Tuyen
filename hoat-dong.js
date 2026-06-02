@@ -6,8 +6,15 @@ const ACTIVITY_META = {
     dang_ky: { icon: 'fa-user-plus', label: 'Đăng ký', class: 'type-signup' },
     dat_ve: { icon: 'fa-ticket', label: 'Đặt vé', class: 'type-booking' },
     sua_ve: { icon: 'fa-pen-to-square', label: 'Sửa vé', class: 'type-edit' },
-    het_han: { icon: 'fa-clock', label: 'Vé hết hạn', class: 'type-expired' }
+    het_han: { icon: 'fa-clock', label: 'Vé hết hạn', class: 'type-expired' },
+    quan_tri: { icon: 'fa-user-shield', label: 'Quản trị', class: 'type-admin' }
 };
+
+function updateAdminNavLink(data) {
+    const el = document.getElementById('navAdminLink');
+    if (!el) return;
+    el.style.display = data && data.isLoggedIn && data.user && data.user.is_admin ? '' : 'none';
+}
 
 async function checkUserSession() {
     try {
@@ -19,13 +26,16 @@ async function checkUserSession() {
 
         if (data.isLoggedIn) {
             isLoggedIn = true;
+            updateAdminNavLink(data);
             showMainContent();
             loadActivities();
         } else {
+            updateAdminNavLink(null);
             showLoginModal();
         }
     } catch (error) {
         console.error('Error checking session:', error);
+        updateAdminNavLink(null);
         showLoginModal();
     }
 }
@@ -47,6 +57,7 @@ function handleLogout() {
     fetch('logicDB.php', { method: 'POST', body: formData })
         .then(() => {
             isLoggedIn = false;
+            updateAdminNavLink(null);
             showLoginModal();
         });
 }
@@ -125,9 +136,7 @@ function renderActivityItem(activity) {
 document.addEventListener('DOMContentLoaded', function () {
     if (window.AuthLogin) {
         window.AuthLogin.onSuccess = function () {
-            isLoggedIn = true;
-            showMainContent();
-            loadActivities();
+            checkUserSession();
         };
     }
 
