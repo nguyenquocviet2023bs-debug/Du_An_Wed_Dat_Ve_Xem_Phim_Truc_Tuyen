@@ -19,11 +19,6 @@ function maskEmail($email) {
     return $visible . '***@' . $domain;
 }
 
-function logOtpDev($to, $otp) {
-    $line = date('Y-m-d H:i:s') . " | {$to} | OTP: {$otp}\n";
-    file_put_contents(__DIR__ . '/otp_dev.log', $line, FILE_APPEND | LOCK_EX);
-}
-
 function logEmailDebug($message) {
     $line = date('Y-m-d H:i:s') . " - " . $message . "\n";
     file_put_contents(__DIR__ . '/email_debug.log', $line, FILE_APPEND | LOCK_EX);
@@ -41,31 +36,43 @@ function sendOtpEmail($toEmail, $userName, $otp) {
 
         $user = trim($config['smtp_user'] ?? '');
         $pass = trim($config['smtp_pass'] ?? '');
+        $devMode = !empty($config['dev_mode']);
 
-        // Nếu chưa cấu hình email, luôn bật dev mode
+        if ($devMode) {
+            logEmailDebug("DEV MODE: OTP for {$toEmail} = {$otp}");
+            return [
+                'success' => true, 
+                'dev' => true,
+                'otp' => $otp,
+                'message' => "CHẾ ĐỘ DEV: Mã OTP của bạn là: {$otp}"
+            ];
+        }
+
         if ($user === '' || $pass === '') {
-            logEmailDebug("Email config incomplete, using dev mode");
-            logOtpDev($toEmail, $otp);
-            return ['success' => true, 'dev' => true];
+            logEmailDebug("❌ Email config incomplete - cannot send OTP");
+            return [
+                'success' => false, 
+                'message' => 'Hệ thống chưa được cấu hình email. Vui lòng bật dev_mode trong email_config.php hoặc cấu hình SMTP.'
+            ];
         }
 
-        // Thử gửi email (chỉ nếu dev_mode = false)
-        if (empty($config['dev_mode'])) {
-            $sent = sendGmailSMTP($config, $toEmail, $subject, $body);
-            if ($sent) {
-                logEmailDebug("Email sent successfully to {$toEmail}");
-                return ['success' => true];
-            }
+        $sent = sendGmailSMTP($config, $toEmail, $subject, $body);
+        if ($sent) {
+            logEmailDebug("✅ Email sent successfully to {$toEmail}");
+            return ['success' => true];
         }
 
-        // Dev mode hoặc email thất bại - ghi OTP vào log file
-        logEmailDebug("Using dev mode fallback - OTP logged to file");
-        logOtpDev($toEmail, $otp);
-        return ['success' => true, 'dev' => true];
+        logEmailDebug("❌ Failed to send email to {$toEmail}");
+        return [
+            'success' => false,
+            'message' => 'Không thể gửi email. Vui lòng kiểm tra:\n1. Kết nối internet\n2. Gmail App Password còn hạn\n3. Hoặc bật dev_mode trong email_config.php để test'
+        ];
     } catch (Exception $e) {
-        logEmailDebug("Exception in sendOtpEmail: " . $e->getMessage());
-        logOtpDev($toEmail, $otp);
-        return ['success' => true, 'dev' => true];
+        logEmailDebug("❌ Exception in sendOtpEmail: " . $e->getMessage());
+        return [
+            'success' => false,
+            'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+        ];
     }
 }
 
@@ -81,7 +88,6 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
     logEmailDebug("Host: {$host}, Port: {$port}, User: {$user}");
 
     try {
-        // Create SSL context
         $context = stream_context_create([
             'ssl' => [
                 'allow_self_signed' => true,
@@ -90,7 +96,6 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
             ]
         ]);
 
-        // Connect using stream_socket_client (better than fsockopen)
         $socket = @stream_socket_client(
             "tcp://{$host}:{$port}",
             $errno,
@@ -108,7 +113,6 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
         stream_set_blocking($socket, true);
         stream_set_timeout($socket, 15);
 
-        // Read initial server response
         $response = fgets($socket, 1024);
         logEmailDebug("→ Server response: " . trim($response));
         
@@ -118,17 +122,14 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
             return false;
         }
 
-        // EHLO command
         fwrite($socket, "EHLO localhost\r\n");
         $response = fgets($socket, 1024);
         logEmailDebug("→ EHLO response: " . trim($response));
 
-        // Read multi-line response
         while (substr($response, 3, 1) === '-') {
             $response = fgets($socket, 1024);
         }
 
-        // STARTTLS command
         fwrite($socket, "STARTTLS\r\n");
         $response = fgets($socket, 1024);
         logEmailDebug("→ STARTTLS response: " . trim($response));
@@ -139,7 +140,6 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
             return false;
         }
 
-        // Enable TLS encryption on the socket
         if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
             logEmailDebug("❌ TLS enable failed on socket");
             fclose($socket);
@@ -148,17 +148,14 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
 
         logEmailDebug("✓ TLS enabled successfully");
 
-        // EHLO again after TLS
         fwrite($socket, "EHLO localhost\r\n");
         $response = fgets($socket, 1024);
         logEmailDebug("→ Post-TLS EHLO: " . trim($response));
 
-        // Read multi-line response
         while (substr($response, 3, 1) === '-') {
             $response = fgets($socket, 1024);
         }
 
-        // AUTH LOGIN
         fwrite($socket, "AUTH LOGIN\r\n");
         $response = fgets($socket, 1024);
         logEmailDebug("→ AUTH LOGIN response: " . trim($response));
@@ -169,12 +166,10 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
             return false;
         }
 
-        // Send username (base64 encoded)
         fwrite($socket, base64_encode($user) . "\r\n");
         $response = fgets($socket, 1024);
         logEmailDebug("→ Username sent, response: " . trim($response));
 
-        // Send password (base64 encoded)
         fwrite($socket, base64_encode($pass) . "\r\n");
         $response = fgets($socket, 1024);
         logEmailDebug("→ Password sent, response: " . trim($response));
@@ -187,17 +182,14 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
 
         logEmailDebug("✓ Authenticated successfully");
 
-        // MAIL FROM
         fwrite($socket, "MAIL FROM:<{$from}>\r\n");
         $response = fgets($socket, 1024);
         logEmailDebug("→ MAIL FROM response: " . trim($response));
 
-        // RCPT TO
         fwrite($socket, "RCPT TO:<{$to}>\r\n");
         $response = fgets($socket, 1024);
         logEmailDebug("→ RCPT TO response: " . trim($response));
 
-        // DATA
         fwrite($socket, "DATA\r\n");
         $response = fgets($socket, 1024);
         logEmailDebug("→ DATA response: " . trim($response));
@@ -208,7 +200,6 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
             return false;
         }
 
-        // Prepare email headers
         $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
         $encodedFromName = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
 
@@ -221,7 +212,6 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
         $message .= "Date: " . date('r') . "\r\n\r\n";
         $message .= $body . "\r\n.\r\n";
 
-        // Send message
         fwrite($socket, $message);
         $response = fgets($socket, 1024);
         logEmailDebug("→ Message send response: " . trim($response));
@@ -234,7 +224,6 @@ function sendGmailSMTP(array $config, $to, $subject, $body) {
 
         logEmailDebug("✓ Message sent successfully");
 
-        // QUIT
         fwrite($socket, "QUIT\r\n");
         fclose($socket);
 

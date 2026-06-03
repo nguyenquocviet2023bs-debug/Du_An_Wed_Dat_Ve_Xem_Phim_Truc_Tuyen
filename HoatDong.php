@@ -20,7 +20,7 @@
                         <a href="TrangChu.php" class="nav-link">Trang chủ</a>
                         <a href="VeDatVe.php" class="nav-link">Vé/Đặt vé</a>
                         <a href="HoatDong.php" class="nav-link active">Hoạt động</a>
-                        <a href="QuanTri.php" class="nav-link" id="navAdminLink" style="display:none" title="Chỉ hiện với tài khoản quản trị">Quản trị</a>
+                        <a href="QuanTri.php" class="nav-link" id="navAdminLink" style="display:none">Quản trị</a>
                     </nav>
                     <div class="header-right">
                         <div class="search-container">

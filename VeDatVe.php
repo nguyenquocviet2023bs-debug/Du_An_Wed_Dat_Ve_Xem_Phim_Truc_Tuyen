@@ -20,7 +20,7 @@
                         <a href="TrangChu.php" class="nav-link">Trang chủ</a>
                         <a href="VeDatVe.php" class="nav-link active">Vé/Đặt vé</a>
                         <a href="HoatDong.php" class="nav-link">Hoạt động</a>
-                        <a href="QuanTri.php" class="nav-link" id="navAdminLink" style="display:none" title="Chỉ hiện với tài khoản quản trị">Quản trị</a>
+                        <a href="QuanTri.php" class="nav-link" id="navAdminLink" style="display:none">Quản trị</a>
                     </nav>
                     <div class="header-right">
                         <div class="search-container">
@@ -43,8 +43,8 @@
                 <h2 class="section-title">Vé Đã Đặt</h2>
                 <p class="tickets-notice">
                     <i class="fas fa-info-circle"></i>
-                    Trong vòng <strong>1 giờ</strong> sau khi đặt, bạn có thể sửa <strong>ngày và giờ</strong> (và ghế khi còn trong thời hạn).
-                    Sơ đồ ghế chỉ hiện khi bấm <strong>Thay đổi ghế</strong> hoặc khi ghế cũ đã có người đặt ở suất mới.
+                    Trong vòng <strong>1 giờ</strong> sau khi đặt, bạn có thể sửa <strong>1 lần duy nhất</strong> về ngày, giờ và ghế.
+                    Sau khi sửa lần đầu, vé sẽ bị khóa và không thể chỉnh sửa thêm.
                     Vé sẽ <strong>tự động xóa</strong> sau khi qua ngày và giờ chiếu.
                 </p>
                 <div id="ticketsList" class="tickets-list">

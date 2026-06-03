@@ -1,6 +1,3 @@
-/**
- * Sơ đồ ghế dùng chung (đặt vé & sửa vé)
- */
 window.SeatMapCommon = {
     rows: ['A', 'B', 'C', 'D', 'E', 'F'],
     pricePerSeat: 50000,
@@ -39,10 +36,6 @@ window.SeatMapCommon = {
         }
     },
 
-    /**
-     * @param {HTMLElement} container
-     * @param {Object} opts - movie, date, time, selectedSeats[], onChange(seats, price)
-     */
     async renderEditMap(container, opts) {
         const { movie, date, time, selectedSeats = [], onChange } = opts;
         container.innerHTML = '<p class="edit-seat-loading">Đang tải ghế...</p>';

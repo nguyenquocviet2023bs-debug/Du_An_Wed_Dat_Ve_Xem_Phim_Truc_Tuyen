@@ -3,10 +3,7 @@ session_start();
 require_once 'db.php';
 require_once 'mailer.php';
 
-/** Số giờ sau khi đặt vé mà khách vẫn được sửa ngày/giờ/ghế (cùng luật một cửa sổ). */
 define('BOOKING_EDIT_WINDOW_HOURS', 1);
-
-// ===== HELPER =====
 
 function outputJson($data) {
     header('Content-Type: application/json; charset=utf-8');
@@ -150,8 +147,6 @@ function cleanupExpiredBookings($pdo, $userPhone) {
     }
 }
 
-// ===== ACTIONS =====
-
 $action = $_POST['action'] ?? '';
 
 if ($action === 'login') {
@@ -173,7 +168,6 @@ if ($action === 'login') {
                 outputJson(['success' => false, 'message' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.']);
             }
 
-            // Kiểm tra mật khẩu (hỗ trợ cả plain text cũ và hash mới)
             $passwordMatches = password_verify($password, $user['mat_khau']) || $password === $user['mat_khau'];
             
             if ($passwordMatches) {
@@ -185,7 +179,6 @@ if ($action === 'login') {
 
                 $role = ($user['vai_tro'] ?? 'user') === 'admin' ? 'admin' : 'user';
 
-                // Quản trị: đăng nhập trực tiếp, không OTP
                 if ($role === 'admin') {
                     completeLogin($pdo, [
                         'phone' => $user['dien_thoai'],
@@ -215,14 +208,21 @@ if ($action === 'login') {
                     outputJson(['success' => false, 'message' => $mailResult['message']]);
                 }
 
-                outputJson([
+                $response = [
                     'success' => true,
                     'require_otp' => true,
                     'masked_email' => maskEmail($email),
                     'dev_mode' => !empty($mailResult['dev']),
                     'expires_in' => 60,
                     'message' => 'Mã xác thực đã được gửi đến email của bạn.',
-                ]);
+                ];
+
+                if (!empty($mailResult['dev'])) {
+                    $response['dev_otp'] = $otp;
+                    $response['message'] = '⚠️ CHẾ ĐỘ DEV: Mã OTP của bạn là: ' . $otp;
+                }
+
+                outputJson($response);
             } else {
                 outputJson(['success' => false, 'message' => 'Mật khẩu sai!']);
             }
@@ -327,27 +327,23 @@ if ($action === 'signup') {
     }
     
     try {
-        // Check duplicate phone
         $stmt = $pdo->prepare("SELECT dien_thoai FROM users WHERE dien_thoai = ?");
         $stmt->execute([$dien_thoai]);
         if ($stmt->fetch()) {
             outputJson(['success' => false, 'message' => 'Số điện thoại đã được đăng ký!']);
         }
         
-        // Check duplicate email
         $stmt = $pdo->prepare("SELECT email FROM users WHERE email = ?");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
             outputJson(['success' => false, 'message' => 'Email đã được đăng ký!']);
         }
         
-        // Insert new user
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         $sql = "INSERT INTO users (ho_ten, dien_thoai, email, ngay_sinh, mat_khau, vai_tro, tai_khoan_bi_khoa, created_at) VALUES (?, ?, ?, ?, ?, 'user', 0, NOW())";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$ho_ten, $dien_thoai, $email, $ngay_sinh, $hashedPassword]);
         
-        // Auto-login
         $_SESSION['user_phone'] = $dien_thoai;
         $_SESSION['user_name'] = $ho_ten;
         $_SESSION['user_email'] = $email;
@@ -423,10 +419,15 @@ function enrichBookingRow($booking) {
     $hoursSince = getHoursSinceBooking($booking['ngay_dat_ve']);
     $win = BOOKING_EDIT_WINDOW_HOURS;
     $withinWindow = $hoursSince <= $win;
-    $booking['can_edit_datetime'] = $withinWindow;
+    $soLanSua = (int)($booking['so_lan_sua'] ?? 0);
+    $daHetQuyen = $soLanSua >= 1;
+    
+    $booking['can_edit_datetime'] = $withinWindow && !$daHetQuyen;
     $booking['can_edit_seats'] = false;
     $booking['hours_since_booking'] = round($hoursSince, 2);
     $booking['hours_remaining_edit'] = $withinWindow ? max(0, round($win - $hoursSince, 2)) : 0;
+    $booking['so_lan_sua'] = $soLanSua;
+    $booking['da_het_quyen_sua'] = $daHetQuyen;
     return $booking;
 }
 
@@ -471,6 +472,11 @@ if ($action === 'updateBooking') {
             outputJson(['success' => false, 'message' => 'Không tìm thấy vé!']);
         }
         
+        $soLanSua = (int)($booking['so_lan_sua'] ?? 0);
+        if ($soLanSua >= 1) {
+            outputJson(['success' => false, 'message' => 'Bạn đã sử dụng quyền chỉnh sửa vé này rồi. Mỗi vé chỉ được sửa 1 lần duy nhất!']);
+        }
+        
         $withinWindow = getHoursSinceBooking($booking['ngay_dat_ve']) <= BOOKING_EDIT_WINDOW_HOURS;
         
         if (!$withinWindow) {
@@ -503,7 +509,7 @@ if ($action === 'updateBooking') {
         $soGheFormatted = implode(', ', $seatList);
         $giaVeMoi = count($seatList) * 50000;
         
-        $sql = "UPDATE bookings SET ngay_chieu = ?, gio_chieu = ?, so_ghe = ?, gia_ve = ? WHERE id = ? AND user_phone = ?";
+        $sql = "UPDATE bookings SET ngay_chieu = ?, gio_chieu = ?, so_ghe = ?, gia_ve = ?, so_lan_sua = so_lan_sua + 1 WHERE id = ? AND user_phone = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$ngayChieu, $gioChieu, $soGheFormatted, $giaVeMoi, $bookingId, $_SESSION['user_phone']]);
 
@@ -512,10 +518,10 @@ if ($action === 'updateBooking') {
             $pdo,
             $_SESSION['user_phone'],
             'sua_ve',
-            'Cập nhật vé phim "' . $booking['ten_phim_dat'] . '" - Suất mới: ' . $suat . ' - Ghế: ' . $soGheFormatted . '.'
+            'Cập nhật vé phim "' . $booking['ten_phim_dat'] . '" - Suất mới: ' . $suat . ' - Ghế: ' . $soGheFormatted . ' (Lần sửa thứ ' . ($soLanSua + 1) . ').'
         );
         
-        outputJson(['success' => true, 'message' => 'Cập nhật vé thành công!']);
+        outputJson(['success' => true, 'message' => 'Cập nhật vé thành công! Lưu ý: Mỗi vé chỉ được sửa 1 lần duy nhất.']);
     } catch (Exception $e) {
         outputJson(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()]);
     }
@@ -585,23 +591,40 @@ if ($action === 'checkSession') {
     }
 }
 
-// ----- Quản trị (chỉ admin) -----
 if ($action === 'adminGetRevenue') {
     if (!isAdmin()) {
         outputJson(['success' => false, 'message' => 'Không có quyền truy cập!']);
     }
+    $month = isset($_POST['month']) ? (int)$_POST['month'] : null;
+    $year = isset($_POST['year']) ? (int)$_POST['year'] : null;
+    
     try {
-        $tot = $pdo->query("SELECT COUNT(*) AS so_ve, COALESCE(SUM(gia_ve), 0) AS tong_tien FROM bookings")->fetch();
-        $stmt = $pdo->query(
-            "SELECT ten_phim_dat, COUNT(*) AS so_ve, COALESCE(SUM(gia_ve), 0) AS tong_tien
-             FROM bookings GROUP BY ten_phim_dat ORDER BY tong_tien DESC"
-        );
+        $whereClause = '';
+        $params = [];
+        
+        if ($month && $year) {
+            $whereClause = ' WHERE MONTH(ngay_chieu) = ? AND YEAR(ngay_chieu) = ?';
+            $params = [$month, $year];
+        }
+        
+        $totSql = "SELECT COUNT(*) AS so_ve, COALESCE(SUM(gia_ve), 0) AS tong_tien FROM bookings" . $whereClause;
+        $stmt = $pdo->prepare($totSql);
+        $stmt->execute($params);
+        $tot = $stmt->fetch();
+        
+        $bySql = "SELECT ten_phim_dat, COUNT(*) AS so_ve, COALESCE(SUM(gia_ve), 0) AS tong_tien
+                  FROM bookings" . $whereClause . " GROUP BY ten_phim_dat ORDER BY tong_tien DESC";
+        $stmt = $pdo->prepare($bySql);
+        $stmt->execute($params);
         $byMovie = $stmt->fetchAll();
+        
         outputJson([
             'success' => true,
             'total_tickets' => (int)($tot['so_ve'] ?? 0),
             'total_revenue' => (float)($tot['tong_tien'] ?? 0),
             'by_movie' => $byMovie,
+            'month' => $month,
+            'year' => $year,
         ]);
     } catch (Exception $e) {
         outputJson(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()]);
@@ -699,4 +722,111 @@ if ($action === 'resetPassword') {
         outputJson(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()]);
     }
 }
+
+if ($action === 'adminGetMovies') {
+    if (!isAdmin()) {
+        outputJson(['success' => false, 'message' => 'Không có quyền truy cập!']);
+    }
+    try {
+        $stmt = $pdo->query("SELECT * FROM movies ORDER BY created_at DESC");
+        outputJson(['success' => true, 'movies' => $stmt->fetchAll()]);
+    } catch (Exception $e) {
+        outputJson(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()]);
+    }
+}
+
+if ($action === 'adminAddMovie') {
+    if (!isAdmin()) {
+        outputJson(['success' => false, 'message' => 'Không có quyền truy cập!']);
+    }
+    $tenPhim = trim($_POST['ten_phim'] ?? '');
+    $moTa = trim($_POST['mo_ta'] ?? '');
+    $theLoai = trim($_POST['the_loai'] ?? '');
+    $daoDien = trim($_POST['dao_dien'] ?? '');
+    $thoiLuong = (int)($_POST['thoi_luong'] ?? 0);
+    $hinhAnhUrl = trim($_POST['hinh_anh_url'] ?? '');
+    $ngayKhoiChieu = trim($_POST['ngay_khoi_chieu'] ?? '');
+    
+    if (empty($tenPhim)) {
+        outputJson(['success' => false, 'message' => 'Vui lòng nhập tên phim!']);
+    }
+    
+    try {
+        $sql = "INSERT INTO movies (ten_phim, mo_ta, the_loai, dao_dien, thoi_luong, hinh_anh_url, ngay_khoi_chieu) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$tenPhim, $moTa, $theLoai, $daoDien, $thoiLuong, $hinhAnhUrl, $ngayKhoiChieu ?: null]);
+        
+        logActivity($pdo, $_SESSION['user_phone'], 'quan_tri', 'Thêm phim mới: ' . $tenPhim);
+        outputJson(['success' => true, 'message' => 'Thêm phim thành công!', 'movie_id' => $pdo->lastInsertId()]);
+    } catch (Exception $e) {
+        outputJson(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()]);
+    }
+}
+
+if ($action === 'adminUpdateMovie') {
+    if (!isAdmin()) {
+        outputJson(['success' => false, 'message' => 'Không có quyền truy cập!']);
+    }
+    $movieId = (int)($_POST['movie_id'] ?? 0);
+    $tenPhim = trim($_POST['ten_phim'] ?? '');
+    $moTa = trim($_POST['mo_ta'] ?? '');
+    $theLoai = trim($_POST['the_loai'] ?? '');
+    $daoDien = trim($_POST['dao_dien'] ?? '');
+    $thoiLuong = (int)($_POST['thoi_luong'] ?? 0);
+    $hinhAnhUrl = trim($_POST['hinh_anh_url'] ?? '');
+    $ngayKhoiChieu = trim($_POST['ngay_khoi_chieu'] ?? '');
+    
+    if ($movieId <= 0 || empty($tenPhim)) {
+        outputJson(['success' => false, 'message' => 'Thông tin không hợp lệ!']);
+    }
+    
+    try {
+        $sql = "UPDATE movies SET ten_phim = ?, mo_ta = ?, the_loai = ?, dao_dien = ?, thoi_luong = ?, 
+                hinh_anh_url = ?, ngay_khoi_chieu = ? WHERE id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$tenPhim, $moTa, $theLoai, $daoDien, $thoiLuong, $hinhAnhUrl, $ngayKhoiChieu ?: null, $movieId]);
+        
+        logActivity($pdo, $_SESSION['user_phone'], 'quan_tri', 'Cập nhật thông tin phim: ' . $tenPhim);
+        outputJson(['success' => true, 'message' => 'Cập nhật phim thành công!']);
+    } catch (Exception $e) {
+        outputJson(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()]);
+    }
+}
+
+if ($action === 'adminDeleteMovie') {
+    if (!isAdmin()) {
+        outputJson(['success' => false, 'message' => 'Không có quyền truy cập!']);
+    }
+    $movieId = (int)($_POST['movie_id'] ?? 0);
+    if ($movieId <= 0) {
+        outputJson(['success' => false, 'message' => 'ID phim không hợp lệ!']);
+    }
+    
+    try {
+        $stmt = $pdo->prepare("SELECT ten_phim FROM movies WHERE id = ? LIMIT 1");
+        $stmt->execute([$movieId]);
+        $movie = $stmt->fetch();
+        if (!$movie) {
+            outputJson(['success' => false, 'message' => 'Không tìm thấy phim!']);
+        }
+        
+        $chk = $pdo->prepare("SELECT COUNT(*) FROM bookings WHERE ten_phim_dat = ?");
+        $chk->execute([$movie['ten_phim']]);
+        $count = (int)$chk->fetchColumn();
+        
+        if ($count > 0) {
+            outputJson(['success' => false, 'message' => "Không thể xóa phim này vì đã có {$count} vé được đặt!"]);
+        }
+        
+        $del = $pdo->prepare("DELETE FROM movies WHERE id = ?");
+        $del->execute([$movieId]);
+        
+        logActivity($pdo, $_SESSION['user_phone'], 'quan_tri', 'Xóa phim: ' . $movie['ten_phim']);
+        outputJson(['success' => true, 'message' => 'Xóa phim thành công!']);
+    } catch (Exception $e) {
+        outputJson(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()]);
+    }
+}
+
 outputJson(['error' => 'Lỗi: Action không hợp lệ!']);

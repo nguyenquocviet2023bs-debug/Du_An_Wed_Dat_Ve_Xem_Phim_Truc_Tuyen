@@ -1,4 +1,3 @@
-// ===== SESSION MANAGEMENT =====
 let isLoggedIn = false;
 let currentUser = null;
 
@@ -8,7 +7,6 @@ function updateAdminNavLink(data) {
     el.style.display = data && data.isLoggedIn && data.user && data.user.is_admin ? '' : 'none';
 }
 
-// Check if user is logged in from server session
 async function checkUserSession() {
     try {
         const formData = new FormData();
@@ -39,7 +37,6 @@ async function checkUserSession() {
     }
 }
 
-// Show main content
 function showMainContent() {
     document.getElementById('mainContent').style.display = 'block';
     document.getElementById('loginModal').classList.remove('active');
@@ -47,16 +44,13 @@ function showMainContent() {
     document.getElementById('logoutBtn').style.display = 'block';
 }
 
-// Show login modal
 function showLoginModal() {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('loginModal').classList.add('active');
     document.getElementById('logoutBtn').style.display = 'none';
 }
 
-// Logout
 function handleLogout() {
-    // Gửi yêu cầu logout tới server
     const formData = new FormData();
     formData.append('action', 'logout');
     
@@ -66,7 +60,6 @@ function handleLogout() {
     })
     .then(response => response.json())
     .then(data => {
-        // Xóa thông tin user từ localStorage
         localStorage.removeItem('currentUser');
         isLoggedIn = false;
         currentUser = null;
@@ -76,7 +69,6 @@ function handleLogout() {
     })
     .catch(error => {
         console.error('Lỗi:', error);
-        // Nếu có lỗi, vẫn xóa localStorage
         localStorage.removeItem('currentUser');
         isLoggedIn = false;
         currentUser = null;
@@ -85,7 +77,6 @@ function handleLogout() {
     });
 }
 
-// Danh sách phim đang chiếu
 const moviesData = [
     { id: 1, name: 'Heo 5 Móng', genre: 'Kinh dị', rating: 8.3 },
     { id: 2, name: 'Trùm Sò', genre: 'Hài', rating: 8.6 },
@@ -96,7 +87,6 @@ const moviesData = [
     { id: 7, name: 'Shin Cậu Bé Búp Chì', genre: 'Hoạt hình', rating: 8.0 },
 ];
 
-// Danh sách giờ chiếu mặc định
 const showtimesData = [
     { time: '09:00', type: 'normal' },
     { time: '11:30', type: 'normal' },
@@ -107,7 +97,6 @@ const showtimesData = [
     { time: '22:00', type: 'normal' }
 ];
 
-// Dữ liệu booking
 let bookingState = {
     selectedMovie: null,
     selectedDate: null,
@@ -116,9 +105,6 @@ let bookingState = {
     pricePerSeat: 50000
 };
 
-
-
-// Bố cục ghế (6 hàng x 15 cột)
 const seatLayout = [
     ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'E', 'A', 'A', 'A', 'A', 'A', 'A', 'A'],
     ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'E', 'A', 'A', 'A', 'A', 'A', 'A', 'A'],
@@ -128,15 +114,12 @@ const seatLayout = [
     ['A', 'A', 'B', 'B', 'B', 'B', 'B', 'E', 'B', 'B', 'B', 'B', 'B', 'A', 'A'],
 ];
 
-// Lưu trữ ghế đã đặt cho mỗi phòng: "movieName|date|showtime" => []
 const bookedSeatsByRoom = {};
 
-// Hàm để lấy key phòng (định danh duy nhất cho mỗi phòng)
 function getRoomKey(movieName, date, showtime) {
     return `${movieName}|${date}|${showtime}`;
 }
 
-// Hàm để lấy danh sách ghế đã đặt của một phòng (cache local)
 function getBookedSeatsForRoom(movieName, date, showtime) {
     const key = getRoomKey(movieName, date, showtime);
     if (!bookedSeatsByRoom[key]) {
@@ -145,7 +128,6 @@ function getBookedSeatsForRoom(movieName, date, showtime) {
     return bookedSeatsByRoom[key];
 }
 
-// Lấy ghế đã đặt từ server (mọi tài khoản, cùng phim/ngày/giờ)
 async function fetchBookedSeatsFromServer(movieName, date, showtime) {
     if (!movieName || !date || !showtime) {
         return [];
@@ -178,10 +160,8 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // Check user session first
     checkUserSession();
     
-    // Initialize
     initNavigation();
     initBookingButtons();
     initMovieCards();
@@ -190,7 +170,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initFormHandlers();
     initBookingModal();
     
-    // Setup logout button
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
@@ -202,7 +181,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ===== MODAL MANAGEMENT =====
 function initModals() {
     const loginModal = document.getElementById('loginModal');
     const signupModal = document.getElementById('signupModal');
@@ -211,7 +189,6 @@ function initModals() {
     const loginBtn = document.getElementById('openLoginBtn');
     const closeButtons = document.querySelectorAll('.close');
     
-    // Open login modal
     if (loginBtn) {
         loginBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -219,21 +196,18 @@ function initModals() {
         });
     }
     
-    // Close modals
     closeButtons.forEach(btn => {
         btn.addEventListener('click', function() {
             this.closest('.modal').classList.remove('active');
         });
     });
     
-    // Close when clicking outside
     window.addEventListener('click', function(e) {
         if (e.target.classList.contains('modal')) {
             e.target.classList.remove('active');
         }
     });
     
-    // Toggle between login and signup
     const openSignupBtn = document.getElementById('openSignupBtn');
     const openLoginBtn2 = document.getElementById('openLoginBtn2');
     const openForgotPasswordBtn = document.getElementById('openForgotPasswordBtn');
@@ -255,7 +229,6 @@ function initModals() {
         });
     }
     
-    // Forgot password modal
     if (openForgotPasswordBtn) {
         openForgotPasswordBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -290,7 +263,6 @@ function closeModal(modal) {
     modal.classList.remove('active');
 }
 
-// ===== FORM HANDLERS =====
 function initFormHandlers() {
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
@@ -349,7 +321,6 @@ function handleSignupSubmit(e) {
             document.getElementById('signupForm').reset();
             isLoggedIn = true;
             
-            // Close signup modal and show main content
             document.getElementById('signupModal').classList.remove('active');
             showMainContent();
         } else {
@@ -371,9 +342,7 @@ function handleForgotPasswordSubmit(e) {
         return;
     }
     
-    // Chuyển sang modal đặt lại mật khẩu
     document.getElementById('forgotPasswordModal').classList.remove('active');
-    // Lưu email vào input hidden để dùng ở form reset
     document.getElementById('resetPasswordForm').dataset.emailOrPhone = email;
     openModal(document.getElementById('resetPasswordModal'));
 }
@@ -399,7 +368,6 @@ function handleResetPasswordSubmit(e) {
         return;
     }
     
-    // Gửi yêu cầu reset password lên server
     const formData = new FormData();
     formData.append('action', 'resetPassword');
     formData.append('email_or_phone', emailOrPhone);
@@ -416,7 +384,6 @@ function handleResetPasswordSubmit(e) {
             document.getElementById('resetPasswordForm').reset();
             document.getElementById('resetPasswordModal').classList.remove('active');
             
-            // Mở lại modal đăng nhập
             setTimeout(() => {
                 openModal(document.getElementById('loginModal'));
             }, 500);
@@ -430,17 +397,14 @@ function handleResetPasswordSubmit(e) {
     });
 }
 
-// ===== BOOKING MODAL HANDLERS =====
 function initBookingModal() {
     const showDateInput = document.getElementById('showDate');
     const confirmBtn = document.getElementById('confirmBooking');
     
-    // Set min date to today
     const today = new Date().toISOString().split('T')[0];
     showDateInput.min = today;
     showDateInput.value = today;
     
-    // Load showtimes for today
     populateShowtimes(today);
     
     bookingState.selectedDate = today;
@@ -463,7 +427,6 @@ function initBookingModal() {
             return;
         }
         
-        // Xác nhận đặt vé
         handleBookingConfirm();
     });
 }
@@ -483,7 +446,6 @@ function populateShowtimes(date) {
             document.querySelectorAll('.showtime-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             bookingState.selectedShowtime = showtime.time;
-            // Refresh seat map khi thay đổi giờ chiếu
             resetSeatSelection();
             fetchBookedSeatsFromServer(
                 bookingState.selectedMovie,
@@ -495,8 +457,6 @@ function populateShowtimes(date) {
         showtimeList.appendChild(btn);
     });
 }
-
-
 
 function initSeatMap() {
     const seatMap = document.getElementById('seatMap');
@@ -583,7 +543,6 @@ function resetBookingState() {
     initSeatMap();
 }
 
-// ===== SEARCH FUNCTIONALITY =====
 function initSearchbar() {
     const searchInput = document.querySelector('.search-input');
     const searchBtn = document.querySelector('.search-btn');
@@ -633,7 +592,11 @@ function displaySearchResults(results, query) {
     resultsContainer.innerHTML = results.map(movie => `
         <div class="search-result-item">
             <div class="search-result-poster">
-                <i class="fas fa-film" style="font-size: 60px; color: #ff6b35; display: flex; align-items: center; justify-content: center; height: 100%;"></i>
+                ${movie.image 
+                    ? `<img src="${movie.image}" alt="${movie.name}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <i class="fas fa-film" style="display:none; font-size: 60px; color: #ff6b35; height: 100%; align-items: center; justify-content: center;"></i>`
+                    : `<i class="fas fa-film" style="font-size: 60px; color: #ff6b35; display: flex; align-items: center; justify-content: center; height: 100%;"></i>`
+                }
             </div>
             <div class="search-result-name">${movie.name}</div>
             <div class="search-result-info">${movie.genre} - ${movie.rating}/10</div>
@@ -643,7 +606,6 @@ function displaySearchResults(results, query) {
         </div>
     `).join('');
     
-    // Attach click handlers to all "Mua vé" buttons in search results
     document.querySelectorAll('.search-result-book-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -654,16 +616,13 @@ function displaySearchResults(results, query) {
 }
 
 function handleSearchResultBooking(movieName) {
-    // Close search results modal
     document.getElementById('searchResultsModal').classList.remove('active');
     
-    // Set selected movie and open booking modal
     bookingState.selectedMovie = movieName;
     document.getElementById('bookingMovieName').textContent = movieName;
     
     openModal(document.getElementById('bookingModal'));
     
-    // Initialize seat map and showtimes
     setTimeout(() => {
         const today = new Date().toISOString().split('T')[0];
         bookingState.selectedDate = today;
@@ -674,7 +633,6 @@ function handleSearchResultBooking(movieName) {
     }, 100);
 }
 
-// ===== NAVIGATION =====
 function initNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
     const currentPage = window.location.pathname.split('/').pop() || 'TrangChu.php';
@@ -695,7 +653,6 @@ function initNavigation() {
     });
 }
 
-// ===== BOOKING BUTTONS =====
 function initBookingButtons() {
     const bookNowBtn = document.querySelector('.btn-book-now');
     const bookBtn = document.querySelector('.btn-book');
@@ -714,7 +671,6 @@ function initBookingButtons() {
 
 function handleBooking(e) {
     e.preventDefault();
-    // Lấy tên phim từ card hoặc banner
     let movieName = 'Phí Phông: Quỷ Máu Rừng Thiêng';
     
     if (this.closest('.movie-card')) {
@@ -726,7 +682,6 @@ function handleBooking(e) {
     
     openModal(document.getElementById('bookingModal'));
     
-    // Đảm bảo seat map và showtime được load
     setTimeout(() => {
         const today = new Date().toISOString().split('T')[0];
         bookingState.selectedDate = today;
@@ -737,7 +692,6 @@ function handleBooking(e) {
     }, 100);
 }
 
-// ===== MOVIE CARDS =====
 function initMovieCards() {
     const trailerBtns = document.querySelectorAll('.btn-trailer');
     trailerBtns.forEach(btn => {
@@ -747,7 +701,6 @@ function initMovieCards() {
         });
     });
     
-    // Lazy load animation
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
@@ -774,7 +727,6 @@ function playTrailer() {
     alert('Trailer sẽ được phát trong một cửa sổ mới!');
 }
 
-// ===== SMOOTH SCROLL =====
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         const href = this.getAttribute('href');
@@ -790,7 +742,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// ===== BOOKING CONFIRMATION =====
 function handleBookingConfirm() {
     if (!isLoggedIn) {
         alert('Vui lòng đăng nhập để đặt vé!');
@@ -818,7 +769,6 @@ function handleBookingConfirm() {
         if (data.success) {
             alert(`Đặt vé thành công!\n\nPhim: ${bookingState.selectedMovie}\nNgày chiếu: ${bookingState.selectedDate}\nGiờ chiếu: ${bookingState.selectedShowtime}\nGhế: ${seatsStr}\nTổng tiền: ${totalPrice.toLocaleString()} VND`);
             
-            // Thêm ghế vào danh sách đã đặt
             const bookedSeatsForCurrentRoom = getBookedSeatsForRoom(
                 bookingState.selectedMovie,
                 bookingState.selectedDate,
@@ -831,7 +781,6 @@ function handleBookingConfirm() {
                 }
             });
             
-            // Đóng modal và reset
             document.getElementById('bookingModal').classList.remove('active');
             resetBookingState();
         } else {
@@ -849,7 +798,6 @@ function handleBookingConfirm() {
     });
 }
 
-// ===== UTILITY FUNCTIONS =====
 function updateFooterYear() {
     const yearElement = document.querySelector('.footer-copyright');
     if (yearElement) {
@@ -860,6 +808,5 @@ function updateFooterYear() {
 
 updateFooterYear();
 
-// ===== INITIALIZATION LOG =====
 console.log('Cinema Group 11 - Home Page Initialized');
 console.log('Ready to handle user interactions');

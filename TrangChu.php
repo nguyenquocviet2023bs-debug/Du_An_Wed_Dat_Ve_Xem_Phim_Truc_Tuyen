@@ -20,7 +20,7 @@
                         <a href="TrangChu.php" class="nav-link active">Trang chủ</a>
                         <a href="VeDatVe.php" class="nav-link">Vé/Đặt vé</a>
                         <a href="HoatDong.php" class="nav-link">Hoạt động</a>
-                        <a href="QuanTri.php" class="nav-link" id="navAdminLink" style="display:none" title="Chỉ hiện với tài khoản quản trị">Quản trị</a>
+                        <a href="QuanTri.php" class="nav-link" id="navAdminLink" style="display:none">Quản trị</a>
                     </nav>
                 <div class="header-right">
                     <div class="search-container">
@@ -38,18 +38,11 @@
         </div>
     </header>
     <section class="banner">
-        <div class="banner-content">
-            <div class="banner-image">
-                <img src="./hq720.jpg" alt="Movie Banner" style="width: 100%; height: 100%;">
-            </div>
-            <div class="banner-overlay"></div>
-            <div class="banner-text">
-                <h2>PHÍ PHÔNG</h2>
-                <p>QUỶ MÁU RỪNG THIÊNG</p>
-                <p class="banner-date">SUẤT CHIẾU ĐẶC BIỆT từ 18H ngày 16.04.2026</p>
-                <button class="btn-book-now">ĐẶT VÉ NGAY</button>
-            </div>
+        <div class="banner-slider">
         </div>
+        <div class="banner-dots"></div>
+        <button class="banner-nav banner-prev"><i class="fas fa-chevron-left"></i></button>
+        <button class="banner-nav banner-next"><i class="fas fa-chevron-right"></i></button>
     </section>
     <section class="movies-section">
         <div class="container">
@@ -207,7 +200,6 @@
             </div>
         </div>
     </section>
-    <!-- Giới Thiệu Section -->
     <section class="intro-section">
         <div class="container">
             <h2 class="section-title">Tại Sao Chọn Cinema Group 11?</h2>
@@ -326,7 +318,7 @@
             </div>
         </div>
     </footer>
-    </div> <!-- End mainContent -->
+    </div>
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -545,5 +537,7 @@
     </div>
     <script src="auth-login.js"></script>
     <script src="script.js"></script>
+    <script src="load-movies.js"></script>
+    <script src="banner-slider.js"></script>
 </body>
 </html>

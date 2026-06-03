@@ -1,5 +1,4 @@
 <?php
-// Database Connection
 $host = "localhost";
 $user = "root";
 $pass = "";
@@ -10,7 +9,6 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     
-    // Auto-create missing columns if not exists
     $stmt = $pdo->query("SHOW COLUMNS FROM bookings LIKE 'ngay_chieu'");
     if ($stmt->rowCount() === 0) {
         $pdo->exec("ALTER TABLE bookings ADD COLUMN ngay_chieu DATE");
@@ -21,6 +19,11 @@ try {
         $pdo->exec("ALTER TABLE bookings ADD COLUMN gio_chieu TIME");
     }
 
+    $stmt = $pdo->query("SHOW COLUMNS FROM bookings LIKE 'so_lan_sua'");
+    if ($stmt->rowCount() === 0) {
+        $pdo->exec("ALTER TABLE bookings ADD COLUMN so_lan_sua INT DEFAULT 0 COMMENT 'Số lần user đã chỉnh sửa vé'");
+    }
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS user_activities (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_phone VARCHAR(20) NOT NULL,
@@ -29,6 +32,20 @@ try {
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_user_phone (user_phone),
         INDEX idx_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS movies (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        ten_phim VARCHAR(255) NOT NULL,
+        mo_ta TEXT,
+        the_loai VARCHAR(100),
+        dao_dien VARCHAR(100),
+        thoi_luong INT COMMENT 'Phút',
+        hinh_anh_url VARCHAR(500),
+        ngay_khoi_chieu DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_ten_phim (ten_phim)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     $activityCount = (int)$pdo->query("SELECT COUNT(*) FROM user_activities")->fetchColumn();
@@ -43,7 +60,6 @@ try {
             WHERE ngay_chieu IS NOT NULL AND gio_chieu IS NOT NULL");
     }
 
-    // Phân quyền: user | admin; khóa tài khoản (1 = bị khóa)
     $stmt = $pdo->query("SHOW COLUMNS FROM users LIKE 'vai_tro'");
     if ($stmt->rowCount() === 0) {
         $pdo->exec("ALTER TABLE users ADD COLUMN vai_tro VARCHAR(20) NOT NULL DEFAULT 'user'");
@@ -53,7 +69,6 @@ try {
         $pdo->exec("ALTER TABLE users ADD COLUMN tai_khoan_bi_khoa TINYINT(1) NOT NULL DEFAULT 0");
     }
 
-    // Tài khoản quản trị mặc định (chỉ tạo nếu chưa có email này)
     $adminEmail = 'admin1@admin.com';
     $adminPhone = '0999999001';
     $chk = $pdo->prepare("SELECT dien_thoai FROM users WHERE email = ? LIMIT 1");

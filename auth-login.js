@@ -1,6 +1,3 @@
-/**
- * Đăng nhập 2 bước: mật khẩu → mã OTP 6 số qua Gmail
- */
 (function () {
     let resendCooldown = 0;
     let otpCountdownInterval = null;
@@ -131,7 +128,11 @@
                 } else if (data.success) {
                     document.getElementById('loginForm').reset();
                     onLoginSuccess();
-                    alert(data.message || 'Đăng nhập thành công!');
+                    if (data.is_admin) {
+                        window.location.href = 'QuanTri.php';
+                    } else {
+                        alert(data.message || 'Đăng nhập thành công!');
+                    }
                 } else {
                     alert(data.message || 'Đăng nhập thất bại!');
                 }

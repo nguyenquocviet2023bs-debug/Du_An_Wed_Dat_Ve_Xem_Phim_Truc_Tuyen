@@ -165,7 +165,6 @@ async function refreshEditSeatMap(form, keepSelection) {
     });
 }
 
-/** Kiểm tra suất mới: chỉ mở sơ đồ ghế khi trùng ghế hoặc user bấm đổi ghế */
 async function onDatetimeChange(form) {
     const date = form.querySelector('[name="ngay_chieu"]')?.value;
     const time = form.querySelector('[name="gio_chieu"]')?.value;
@@ -211,10 +210,20 @@ async function onDatetimeChange(form) {
 function renderTicketCard(booking) {
     const canEditDatetime = booking.can_edit_datetime;
     const hoursLeft = booking.hours_remaining_edit;
-    const statusClass = canEditDatetime ? 'status-editable' : 'status-locked';
-    const statusText = canEditDatetime
-        ? `Còn ${formatHoursRemaining(hoursLeft)} để sửa ngày/giờ`
-        : 'Đã quá 1 giờ — không sửa được ngày/giờ';
+    const daHetQuyen = booking.da_het_quyen_sua;
+    const soLanSua = booking.so_lan_sua || 0;
+    
+    let statusClass, statusText;
+    if (daHetQuyen) {
+        statusClass = 'status-locked';
+        statusText = '🔒 Đã sửa 1 lần — không thể sửa thêm';
+    } else if (canEditDatetime) {
+        statusClass = 'status-editable';
+        statusText = `Còn ${formatHoursRemaining(hoursLeft)} để sửa (còn ${1 - soLanSua} lần)`;
+    } else {
+        statusClass = 'status-locked';
+        statusText = 'Đã quá 1 giờ — không sửa được';
+    }
 
     const seatSection = canEditDatetime ? `
                 <div class="ticket-seat-edit">
@@ -238,6 +247,10 @@ function renderTicketCard(booking) {
                     <input type="text" value="${escapeHtml(booking.so_ghe || '')}"
                         class="ticket-input ticket-input-fixed" disabled readonly>
                 </div>`;
+
+    const lockNote = daHetQuyen 
+        ? '<p class="ticket-lock-note"><i class="fas fa-ban"></i> Bạn đã sử dụng quyền chỉnh sửa vé này. Mỗi vé chỉ được sửa 1 lần duy nhất.</p>'
+        : (!canEditDatetime ? '<p class="ticket-lock-note"><i class="fas fa-lock"></i> Ngày và giờ chiếu đã bị khóa sau 1 giờ kể từ lúc đặt vé.</p>' : '');
 
     return `
         <article class="ticket-card" data-id="${booking.id}">
@@ -266,9 +279,9 @@ function renderTicketCard(booking) {
                     </div>
                 </div>
                 ${seatSection}
-                ${!canEditDatetime ? '<p class="ticket-lock-note"><i class="fas fa-lock"></i> Ngày và giờ chiếu đã bị khóa sau 1 giờ kể từ lúc đặt vé.</p>' : ''}
+                ${lockNote}
                 ${canEditDatetime ? `<button type="submit" class="btn-submit btn-save-ticket">
-                    <i class="fas fa-save"></i> Lưu thay đổi
+                    <i class="fas fa-save"></i> Lưu thay đổi (Chỉ được sửa 1 lần)
                 </button>` : ''}
             </form>
         </article>`;
