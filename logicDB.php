@@ -3,7 +3,7 @@ session_start();
 require_once 'db.php';
 require_once 'mailer.php';
 
-define('BOOKING_EDIT_WINDOW_HOURS', 1);
+define('BOOKING_EDIT_WINDOW_HOURS', 0.5);
 
 function outputJson($data) {
     header('Content-Type: application/json; charset=utf-8');
@@ -480,8 +480,8 @@ if ($action === 'updateBooking') {
         $withinWindow = getHoursSinceBooking($booking['ngay_dat_ve']) <= BOOKING_EDIT_WINDOW_HOURS;
         
         if (!$withinWindow) {
-            $h = (int)BOOKING_EDIT_WINDOW_HOURS;
-            outputJson(['success' => false, 'message' => "Đã quá {$h} giờ kể từ khi đặt vé. Không thể thay đổi ngày và giờ chiếu!"]);
+            $mins = (int)(BOOKING_EDIT_WINDOW_HOURS * 60);
+            outputJson(['success' => false, 'message' => "Đã quá {$mins} phút kể từ khi đặt vé. Không thể thay đổi ngày và giờ chiếu!"]);
         }
         
         if (empty($ngayChieu) || empty($gioChieu)) {
@@ -562,8 +562,14 @@ if ($action === 'getBookedSeats') {
     }
 }
 
+function cleanupExpiredMovies($pdo) {
+    $stmt = $pdo->prepare("DELETE FROM movies WHERE ngay_khoi_chieu IS NOT NULL AND ngay_khoi_chieu < DATE_SUB(CURDATE(), INTERVAL 2 MONTH)");
+    $stmt->execute();
+}
+
 if ($action === 'getMovies') {
     try {
+        cleanupExpiredMovies($pdo);
         $stmt = $pdo->query("SELECT * FROM movies ORDER BY created_at DESC");
         $movies = $stmt->fetchAll();
         
@@ -728,6 +734,7 @@ if ($action === 'adminGetMovies') {
         outputJson(['success' => false, 'message' => 'Không có quyền truy cập!']);
     }
     try {
+        cleanupExpiredMovies($pdo);
         $stmt = $pdo->query("SELECT * FROM movies ORDER BY created_at DESC");
         outputJson(['success' => true, 'movies' => $stmt->fetchAll()]);
     } catch (Exception $e) {
@@ -746,16 +753,17 @@ if ($action === 'adminAddMovie') {
     $thoiLuong = (int)($_POST['thoi_luong'] ?? 0);
     $hinhAnhUrl = trim($_POST['hinh_anh_url'] ?? '');
     $ngayKhoiChieu = trim($_POST['ngay_khoi_chieu'] ?? '');
+    $gioiHanTuoi = trim($_POST['gioi_han_do_tuoi'] ?? 'K');
     
     if (empty($tenPhim)) {
         outputJson(['success' => false, 'message' => 'Vui lòng nhập tên phim!']);
     }
     
     try {
-        $sql = "INSERT INTO movies (ten_phim, mo_ta, the_loai, dao_dien, thoi_luong, hinh_anh_url, ngay_khoi_chieu) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO movies (ten_phim, mo_ta, the_loai, dao_dien, thoi_luong, hinh_anh_url, ngay_khoi_chieu, gioi_han_do_tuoi) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$tenPhim, $moTa, $theLoai, $daoDien, $thoiLuong, $hinhAnhUrl, $ngayKhoiChieu ?: null]);
+        $stmt->execute([$tenPhim, $moTa, $theLoai, $daoDien, $thoiLuong, $hinhAnhUrl, $ngayKhoiChieu ?: null, $gioiHanTuoi]);
         
         logActivity($pdo, $_SESSION['user_phone'], 'quan_tri', 'Thêm phim mới: ' . $tenPhim);
         outputJson(['success' => true, 'message' => 'Thêm phim thành công!', 'movie_id' => $pdo->lastInsertId()]);
@@ -776,6 +784,7 @@ if ($action === 'adminUpdateMovie') {
     $thoiLuong = (int)($_POST['thoi_luong'] ?? 0);
     $hinhAnhUrl = trim($_POST['hinh_anh_url'] ?? '');
     $ngayKhoiChieu = trim($_POST['ngay_khoi_chieu'] ?? '');
+    $gioiHanTuoi = trim($_POST['gioi_han_do_tuoi'] ?? 'K');
     
     if ($movieId <= 0 || empty($tenPhim)) {
         outputJson(['success' => false, 'message' => 'Thông tin không hợp lệ!']);
@@ -783,9 +792,9 @@ if ($action === 'adminUpdateMovie') {
     
     try {
         $sql = "UPDATE movies SET ten_phim = ?, mo_ta = ?, the_loai = ?, dao_dien = ?, thoi_luong = ?, 
-                hinh_anh_url = ?, ngay_khoi_chieu = ? WHERE id = ?";
+                hinh_anh_url = ?, ngay_khoi_chieu = ?, gioi_han_do_tuoi = ? WHERE id = ?";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$tenPhim, $moTa, $theLoai, $daoDien, $thoiLuong, $hinhAnhUrl, $ngayKhoiChieu ?: null, $movieId]);
+        $stmt->execute([$tenPhim, $moTa, $theLoai, $daoDien, $thoiLuong, $hinhAnhUrl, $ngayKhoiChieu ?: null, $gioiHanTuoi, $movieId]);
         
         logActivity($pdo, $_SESSION['user_phone'], 'quan_tri', 'Cập nhật thông tin phim: ' . $tenPhim);
         outputJson(['success' => true, 'message' => 'Cập nhật phim thành công!']);

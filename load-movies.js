@@ -12,14 +12,18 @@ async function loadMoviesFromDatabase() {
                 id: m.id,
                 name: m.ten_phim,
                 genre: m.the_loai || 'Chưa rõ',
-                rating: 8.5,
                 image: m.hinh_anh_url,
                 duration: m.thoi_luong
             }));
+            var params = new URLSearchParams(window.location.search);
+            var bookMovie = params.get('book');
+            if (bookMovie && typeof openBookingForMovie === 'function') {
+                setTimeout(function () {
+                    openBookingForMovie(bookMovie);
+                }, 300);
+            }
         }
-    } catch (error) {
-        console.error('Lỗi khi tải phim:', error);
-    }
+    } catch (error) {}
 }
 
 function renderMoviesGrid(movies) {
@@ -35,29 +39,20 @@ function renderMoviesGrid(movies) {
         <div class="movie-card">
             <div class="movie-poster">
                 ${movie.hinh_anh_url 
-                    ? `<img src="${escapeHtml(movie.hinh_anh_url)}" alt="${escapeHtml(movie.ten_phim)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                       <div class="movie-no-image" style="display:none;">
-                           <i class="fas fa-film" style="font-size: 60px; color: #ddd;"></i>
-                       </div>`
-                    : `<div class="movie-no-image">
-                           <i class="fas fa-film" style="font-size: 60px; color: #ddd;"></i>
-                       </div>`
+                    ? `<img src="${escapeHtml(movie.hinh_anh_url)}" alt="${escapeHtml(movie.ten_phim)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="movie-no-image" style="display:none;"><i class="fas fa-film" style="font-size: 60px; color: #ddd;"></i></div>`
+                    : `<div class="movie-no-image"><i class="fas fa-film" style="font-size: 60px; color: #ddd;"></i></div>`
                 }
                 <div class="movie-overlay">
-                    <button class="btn-trailer">
-                        <i class="fas fa-play"></i> Trailer
-                    </button>
+                    <button class="btn-trailer"><i class="fas fa-play"></i> Trailer</button>
                 </div>
-                <span class="movie-rating">8.5</span>
-                <span class="movie-age">T13</span>
+                <span class="movie-age">${movie.gioi_han_do_tuoi || 'K'}</span>
             </div>
             <h3 class="movie-title">${escapeHtml(movie.ten_phim)}</h3>
-            <p class="movie-info">${escapeHtml(movie.the_loai || 'Phim')} | ${movie.thoi_luong || 120} phút</p>
+            <p class="movie-info">${movie.the_loai ? escapeHtml(movie.the_loai) + ' | ' : ''}${movie.thoi_luong || 120} phút</p>
             <button class="btn-book-movie">Mua vé</button>
         </div>
     `).join('');
     
-    initBookingButtons();
     initMovieCards();
 }
 
@@ -68,8 +63,4 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadMoviesFromDatabase);
-} else {
-    loadMoviesFromDatabase();
-}
+// loadMoviesFromDatabase is called from showMainContent() in script.js

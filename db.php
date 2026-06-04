@@ -43,6 +43,8 @@ try {
         thoi_luong INT COMMENT 'Phút',
         hinh_anh_url VARCHAR(500),
         ngay_khoi_chieu DATE,
+        diem_danh_gia DECIMAL(3,1) DEFAULT 0.0,
+        gioi_han_do_tuoi VARCHAR(10) DEFAULT 'K',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_ten_phim (ten_phim)

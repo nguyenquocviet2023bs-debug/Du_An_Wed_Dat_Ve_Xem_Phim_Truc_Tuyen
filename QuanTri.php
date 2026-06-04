@@ -24,6 +24,7 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
     <style>
         body {
             background: #1a1a1a !important;
@@ -365,29 +366,102 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
         .btn-submit:hover {
             background: #e55a28;
         }
+
+        .date-selects {
+            display: flex;
+            gap: 8px;
+        }
+        .date-selects select.date-select {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: #2c2c2c;
+            color: #e0e0e0;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+            cursor: pointer;
+        }
+        .date-selects select.date-select:focus {
+            border-color: #ff6b35;
+        }
+        .date-selects select.date-select option {
+            background: #2c2c2c;
+            color: #e0e0e0;
+        }
+
+        select.form-select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: #2c2c2c;
+            color: #e0e0e0;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        select.form-select:focus {
+            border-color: #ff6b35;
+        }
+        select.form-select option {
+            background: #2c2c2c;
+            color: #e0e0e0;
+        }
     </style>
 </head>
 <body>
     <div id="mainContent" class="main-content">
-        <header class="header">
+        <header class="header modern-header admin-header">
             <div class="container">
                 <div class="header-top">
-                    <div class="logo">
+                    <div class="logo modern-logo admin-logo">
                         <i class="fas fa-user-shield"></i>
                         <span>Cinema Group 11 - Admin Panel</span>
                     </div>
-                    <div class="header-right">
+                    
+                    <button class="hamburger-menu" id="hamburgerBtn" aria-label="Toggle Menu">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
+
+                    <nav class="navbar modern-navbar admin-navbar">
+                        <a href="TrangChu.php" class="nav-link modern-nav-link" data-text="Trang chủ">
+                            <span class="nav-icon"><i class="fas fa-home"></i></span>
+                            <span class="nav-text">Trang chủ</span>
+                        </a>
+                        <a href="VeDatVe.php" class="nav-link modern-nav-link" data-text="Vé/Đặt vé">
+                            <span class="nav-icon"><i class="fas fa-ticket-alt"></i></span>
+                            <span class="nav-text">Vé/Đặt vé</span>
+                        </a>
+                        <a href="HoatDong.php" class="nav-link modern-nav-link" data-text="Hoạt động">
+                            <span class="nav-icon"><i class="fas fa-history"></i></span>
+                            <span class="nav-text">Hoạt động</span>
+                        </a>
+                        <a href="QuanTri.php" class="nav-link modern-nav-link active admin-link" data-text="Quản trị">
+                            <span class="nav-icon"><i class="fas fa-user-shield"></i></span>
+                            <span class="nav-text">Quản trị</span>
+                        </a>
+                    </nav>
+
+                    <div class="header-right modern-header-right">
                         <div class="admin-user-info">
                             <i class="fas fa-user-circle"></i>
                             <span><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin', ENT_QUOTES, 'UTF-8'); ?></span>
                         </div>
-                        <button class="login-btn" id="logoutBtn" type="button">
-                            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                        <button class="login-btn modern-btn" id="logoutBtn" type="button">
+                            <span class="btn-icon"><i class="fas fa-sign-out-alt"></i></span>
+                            <span class="btn-text">Đăng xuất</span>
                         </button>
                     </div>
                 </div>
             </div>
         </header>
+
+        <div class="mobile-overlay" id="mobileOverlay"></div>
 
         <section class="admin-section">
             <div class="container">
@@ -458,6 +532,7 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
                     <p class="admin-intro" style="margin-top:-8px; text-align: left;">Khóa/mở khóa tài khoản người dùng. Tài khoản bị khóa không thể đăng nhập.</p>
                     <div id="usersContent" class="admin-loading">Chọn tab để tải dữ liệu.</div>
                 </div>
+
             </div>
         </section>
 
@@ -512,8 +587,36 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
                         <input type="number" id="movieDuration" name="thoi_luong" min="0" placeholder="120">
                     </div>
                     <div class="form-group">
-                        <label for="movieReleaseDate">Ngày khởi chiếu</label>
-                        <input type="date" id="movieReleaseDate" name="ngay_khoi_chieu">
+                        <label>Ngày khởi chiếu</label>
+                        <div class="date-selects">
+                            <select id="movieReleaseDay" class="date-select">
+                                <option value="">Ngày</option>
+                                <option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option>
+                            </select>
+                            <select id="movieReleaseMonth" class="date-select">
+                                <option value="">Tháng</option>
+                                <option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                            </select>
+                            <select id="movieReleaseYear" class="date-select">
+                                <option value="">Năm</option>
+                                <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="movieAgeRating">Giới hạn độ tuổi</label>
+                        <select id="movieAgeRating" name="gioi_han_do_tuoi" class="form-select">
+                            <option value="K">K (Không giới hạn)</option>
+                            <option value="T13">T13 (13+)</option>
+                            <option value="T16">T16 (16+)</option>
+                            <option value="T18">T18 (18+)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label> </label>
+                        <div style="height:1px;"></div>
                     </div>
                 </div>
                 <div class="form-group">
@@ -531,6 +634,7 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
         </div>
     </div>
 
+    <!-- modern-decoration.js removed (user requested) -->
     <script src="admin.js"></script>
     <script>
         (function() {

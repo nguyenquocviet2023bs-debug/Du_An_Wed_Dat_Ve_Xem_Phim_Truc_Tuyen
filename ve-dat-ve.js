@@ -222,7 +222,7 @@ function renderTicketCard(booking) {
         statusText = `Còn ${formatHoursRemaining(hoursLeft)} để sửa (còn ${1 - soLanSua} lần)`;
     } else {
         statusClass = 'status-locked';
-        statusText = 'Đã quá 1 giờ — không sửa được';
+        statusText = 'Đã quá 30 phút — không sửa được';
     }
 
     const seatSection = canEditDatetime ? `
@@ -250,7 +250,7 @@ function renderTicketCard(booking) {
 
     const lockNote = daHetQuyen 
         ? '<p class="ticket-lock-note"><i class="fas fa-ban"></i> Bạn đã sử dụng quyền chỉnh sửa vé này. Mỗi vé chỉ được sửa 1 lần duy nhất.</p>'
-        : (!canEditDatetime ? '<p class="ticket-lock-note"><i class="fas fa-lock"></i> Ngày và giờ chiếu đã bị khóa sau 1 giờ kể từ lúc đặt vé.</p>' : '');
+        : (!canEditDatetime ? '<p class="ticket-lock-note"><i class="fas fa-lock"></i> Ngày và giờ chiếu đã bị khóa sau 30 phút kể từ lúc đặt vé.</p>' : '');
 
     return `
         <article class="ticket-card" data-id="${booking.id}">
@@ -356,7 +356,7 @@ async function handleUpdateBooking(e) {
     const soGheInput = form.querySelector('[name="so_ghe"]');
 
     if (dateInput.disabled || timeInput.disabled) {
-        alert('Đã quá 1 giờ. Không thể sửa ngày và giờ chiếu!');
+        alert('Đã quá 30 phút. Không thể sửa ngày và giờ chiếu!');
         return;
     }
 

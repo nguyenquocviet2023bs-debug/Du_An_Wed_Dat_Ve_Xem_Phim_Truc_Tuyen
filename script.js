@@ -12,11 +12,7 @@ async function checkUserSession() {
         const formData = new FormData();
         formData.append('action', 'checkSession');
         
-        const response = await fetch('logicDB.php', {
-            method: 'POST',
-            body: formData
-        });
-        
+        const response = await fetch('logicDB.php', { method: 'POST', body: formData });
         const data = await response.json();
         
         if (data.isLoggedIn) {
@@ -31,7 +27,6 @@ async function checkUserSession() {
             showLoginModal();
         }
     } catch (error) {
-        console.error('Error checking session:', error);
         updateAdminNavLink(null);
         showLoginModal();
     }
@@ -42,6 +37,7 @@ function showMainContent() {
     document.getElementById('loginModal').classList.remove('active');
     document.getElementById('signupModal').classList.remove('active');
     document.getElementById('logoutBtn').style.display = 'block';
+    if (typeof loadMoviesFromDatabase === 'function') loadMoviesFromDatabase();
 }
 
 function showLoginModal() {
@@ -54,10 +50,7 @@ function handleLogout() {
     const formData = new FormData();
     formData.append('action', 'logout');
     
-    fetch('logicDB.php', {
-        method: 'POST',
-        body: formData
-    })
+    fetch('logicDB.php', { method: 'POST', body: formData })
     .then(response => response.json())
     .then(data => {
         localStorage.removeItem('currentUser');
@@ -68,7 +61,6 @@ function handleLogout() {
         alert(data.message);
     })
     .catch(error => {
-        console.error('Lỗi:', error);
         localStorage.removeItem('currentUser');
         isLoggedIn = false;
         currentUser = null;
@@ -78,13 +70,13 @@ function handleLogout() {
 }
 
 const moviesData = [
-    { id: 1, name: 'Heo 5 Móng', genre: 'Kinh dị', rating: 8.3 },
-    { id: 2, name: 'Trùm Sò', genre: 'Hài', rating: 8.6 },
-    { id: 3, name: 'Phí Phông: Quỷ Máu Rừng Thiêng', genre: 'Kinh dị', rating: 8.7 },
-    { id: 4, name: 'Đại Tiệc Trăng Máu 8', genre: 'Hành động', rating: 8.2 },
-    { id: 5, name: 'Anh Hùng', genre: 'Tâm lý', rating: 8.7 },
-    { id: 6, name: 'Super Mario Thiên Hà', genre: 'Hoạt hình', rating: 8.1 },
-    { id: 7, name: 'Shin Cậu Bé Búp Chì', genre: 'Hoạt hình', rating: 8.0 },
+    { id: 1, name: 'Heo 5 Móng', genre: 'Kinh dị' },
+    { id: 2, name: 'Trùm Sò', genre: 'Hài' },
+    { id: 3, name: 'Phí Phông: Quỷ Máu Rừng Thiêng', genre: 'Kinh dị' },
+    { id: 4, name: 'Đại Tiệc Trăng Máu 8', genre: 'Hành động' },
+    { id: 5, name: 'Anh Hùng', genre: 'Tâm lý' },
+    { id: 6, name: 'Super Mario Thiên Hà', genre: 'Hoạt hình' },
+    { id: 7, name: 'Shin Cậu Bé Búp Chì', genre: 'Hoạt hình' },
 ];
 
 const showtimesData = [
@@ -122,16 +114,12 @@ function getRoomKey(movieName, date, showtime) {
 
 function getBookedSeatsForRoom(movieName, date, showtime) {
     const key = getRoomKey(movieName, date, showtime);
-    if (!bookedSeatsByRoom[key]) {
-        bookedSeatsByRoom[key] = [];
-    }
+    if (!bookedSeatsByRoom[key]) bookedSeatsByRoom[key] = [];
     return bookedSeatsByRoom[key];
 }
 
 async function fetchBookedSeatsFromServer(movieName, date, showtime) {
-    if (!movieName || !date || !showtime) {
-        return [];
-    }
+    if (!movieName || !date || !showtime) return [];
     try {
         const formData = new FormData();
         formData.append('action', 'getBookedSeats');
@@ -147,9 +135,7 @@ async function fetchBookedSeatsFromServer(movieName, date, showtime) {
             bookedSeatsByRoom[key] = data.seats;
             return data.seats;
         }
-    } catch (error) {
-        console.error('Không tải được ghế đã đặt:', error);
-    }
+    } catch (error) {}
     return getBookedSeatsForRoom(movieName, date, showtime);
 }
 
@@ -160,8 +146,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    checkUserSession();
-    
     initNavigation();
     initBookingButtons();
     initMovieCards();
@@ -170,13 +154,24 @@ document.addEventListener('DOMContentLoaded', function() {
     initFormHandlers();
     initBookingModal();
     
+    document.addEventListener('click', function(e) {
+        var card = e.target.closest('.movie-card');
+        if (card && !e.target.closest('.btn-trailer')) {
+            var btn = card.querySelector('.btn-book-movie');
+            if (btn) {
+                e.preventDefault();
+                handleBooking.call(btn, e);
+            }
+        }
+    });
+    
+    checkUserSession();
+    
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-                handleLogout();
-            }
+            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) handleLogout();
         });
     }
 });
@@ -269,17 +264,9 @@ function initFormHandlers() {
     const forgotPasswordForm = document.getElementById('forgotPasswordForm');
     const resetPasswordForm = document.getElementById('resetPasswordForm');
     
-    if (signupForm) {
-        signupForm.addEventListener('submit', handleSignupSubmit);
-    }
-    
-    if (forgotPasswordForm) {
-        forgotPasswordForm.addEventListener('submit', handleForgotPasswordSubmit);
-    }
-    
-    if (resetPasswordForm) {
-        resetPasswordForm.addEventListener('submit', handleResetPasswordSubmit);
-    }
+    if (signupForm) signupForm.addEventListener('submit', handleSignupSubmit);
+    if (forgotPasswordForm) forgotPasswordForm.addEventListener('submit', handleForgotPasswordSubmit);
+    if (resetPasswordForm) resetPasswordForm.addEventListener('submit', handleResetPasswordSubmit);
 }
 
 function handleSignupSubmit(e) {
@@ -310,17 +297,13 @@ function handleSignupSubmit(e) {
     formData.append('password', password);
     if (birthday) formData.append('ngay_sinh', birthday);
     
-    fetch('logicDB.php', {
-        method: 'POST',
-        body: formData
-    })
+    fetch('logicDB.php', { method: 'POST', body: formData })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             alert('Đăng ký thành công! Chào mừng bạn');
             document.getElementById('signupForm').reset();
             isLoggedIn = true;
-            
             document.getElementById('signupModal').classList.remove('active');
             showMainContent();
         } else {
@@ -328,7 +311,6 @@ function handleSignupSubmit(e) {
         }
     })
     .catch(error => {
-        console.error('Lỗi:', error);
         alert('Có lỗi xảy ra, vui lòng thử lại!');
     });
 }
@@ -373,26 +355,19 @@ function handleResetPasswordSubmit(e) {
     formData.append('email_or_phone', emailOrPhone);
     formData.append('new_password', newPassword);
     
-    fetch('logicDB.php', {
-        method: 'POST',
-        body: formData
-    })
+    fetch('logicDB.php', { method: 'POST', body: formData })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             alert('Đặt lại mật khẩu thành công!\n\nBây giờ bạn có thể đăng nhập với mật khẩu mới.');
             document.getElementById('resetPasswordForm').reset();
             document.getElementById('resetPasswordModal').classList.remove('active');
-            
-            setTimeout(() => {
-                openModal(document.getElementById('loginModal'));
-            }, 500);
+            setTimeout(() => openModal(document.getElementById('loginModal')), 500);
         } else {
             alert(data.message);
         }
     })
     .catch(error => {
-        console.error('Lỗi:', error);
         alert('Có lỗi xảy ra, vui lòng thử lại!');
     });
 }
@@ -406,7 +381,6 @@ function initBookingModal() {
     showDateInput.value = today;
     
     populateShowtimes(today);
-    
     bookingState.selectedDate = today;
 
     showDateInput.addEventListener('change', function() {
@@ -426,7 +400,6 @@ function initBookingModal() {
             alert('Vui lòng chọn ít nhất 1 ghế!');
             return;
         }
-        
         handleBookingConfirm();
     });
 }
@@ -507,7 +480,6 @@ function initSeatMap() {
                     updateBookingInfo();
                 });
             }
-            
             seatMap.appendChild(seatDiv);
         });
     });
@@ -516,7 +488,6 @@ function initSeatMap() {
 function updateBookingInfo() {
     const count = bookingState.selectedSeats.length;
     const total = count * bookingState.pricePerSeat;
-    
     document.getElementById('selectedCount').textContent = count;
     document.getElementById('totalPrice').textContent = total.toLocaleString() + ' VND';
 }
@@ -549,15 +520,11 @@ function initSearchbar() {
     
     if (searchInput) {
         searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                performSearch();
-            }
+            if (e.key === 'Enter') performSearch();
         });
     }
     
-    if (searchBtn) {
-        searchBtn.addEventListener('click', performSearch);
-    }
+    if (searchBtn) searchBtn.addEventListener('click', performSearch);
 }
 
 function performSearch() {
@@ -569,10 +536,7 @@ function performSearch() {
         return;
     }
     
-    const results = moviesData.filter(movie =>
-        movie.name.toLowerCase().includes(query)
-    );
-    
+    const results = moviesData.filter(movie => movie.name.toLowerCase().includes(query));
     displaySearchResults(results, query);
     openModal(document.getElementById('searchResultsModal'));
 }
@@ -581,11 +545,7 @@ function displaySearchResults(results, query) {
     const resultsContainer = document.getElementById('searchResults');
     
     if (results.length === 0) {
-        resultsContainer.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 30px;">
-                <p style="color: #999; font-size: 16px;">Không tìm thấy phim nào với tên "<strong>${query}</strong>"</p>
-            </div>
-        `;
+        resultsContainer.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 30px;"><p style="color: #999; font-size: 16px;">Không tìm thấy phim nào với tên "<strong>${query}</strong>"</p></div>`;
         return;
     }
     
@@ -593,16 +553,13 @@ function displaySearchResults(results, query) {
         <div class="search-result-item">
             <div class="search-result-poster">
                 ${movie.image 
-                    ? `<img src="${movie.image}" alt="${movie.name}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                       <i class="fas fa-film" style="display:none; font-size: 60px; color: #ff6b35; height: 100%; align-items: center; justify-content: center;"></i>`
+                    ? `<img src="${movie.image}" alt="${movie.name}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><i class="fas fa-film" style="display:none; font-size: 60px; color: #ff6b35; height: 100%; align-items: center; justify-content: center;"></i>`
                     : `<i class="fas fa-film" style="font-size: 60px; color: #ff6b35; display: flex; align-items: center; justify-content: center; height: 100%;"></i>`
                 }
             </div>
             <div class="search-result-name">${movie.name}</div>
-            <div class="search-result-info">${movie.genre} - ${movie.rating}/10</div>
-            <button class="search-result-book-btn" data-movie-name="${movie.name}" style="background: #ff6b35; color: white; padding: 8px 15px; border-radius: 5px; margin-top: 10px; font-size: 12px; width: 100%;">
-                Mua vé
-            </button>
+            <div class="search-result-info">${movie.genre}</div>
+            <button class="search-result-book-btn" data-movie-name="${movie.name}" style="background: #ff6b35; color: white; padding: 8px 15px; border-radius: 5px; margin-top: 10px; font-size: 12px; width: 100%;">Mua vé</button>
         </div>
     `).join('');
     
@@ -617,12 +574,9 @@ function displaySearchResults(results, query) {
 
 function handleSearchResultBooking(movieName) {
     document.getElementById('searchResultsModal').classList.remove('active');
-    
     bookingState.selectedMovie = movieName;
     document.getElementById('bookingMovieName').textContent = movieName;
-    
     openModal(document.getElementById('bookingModal'));
-    
     setTimeout(() => {
         const today = new Date().toISOString().split('T')[0];
         bookingState.selectedDate = today;
@@ -654,34 +608,13 @@ function initNavigation() {
 }
 
 function initBookingButtons() {
-    const bookNowBtn = document.querySelector('.btn-book-now');
-    const bookBtn = document.querySelector('.btn-book');
-    const bookMovieBtns = document.querySelectorAll('.btn-book-movie');
-    
-    if (bookNowBtn) {
-        bookNowBtn.addEventListener('click', handleBooking);
-    }
-    if (bookBtn) {
-        bookBtn.addEventListener('click', handleBooking);
-    }
-    bookMovieBtns.forEach(btn => {
-        btn.addEventListener('click', handleBooking);
-    });
+    // Event delegation handled globally via document click
 }
 
-function handleBooking(e) {
-    e.preventDefault();
-    let movieName = 'Phí Phông: Quỷ Máu Rừng Thiêng';
-    
-    if (this.closest('.movie-card')) {
-        movieName = this.closest('.movie-card').querySelector('.movie-title').textContent;
-    }
-    
+function openBookingForMovie(movieName) {
     bookingState.selectedMovie = movieName;
     document.getElementById('bookingMovieName').textContent = movieName;
-    
     openModal(document.getElementById('bookingModal'));
-    
     setTimeout(() => {
         const today = new Date().toISOString().split('T')[0];
         bookingState.selectedDate = today;
@@ -692,12 +625,23 @@ function handleBooking(e) {
     }, 100);
 }
 
+function handleBooking(e) {
+    e.preventDefault();
+    let movieName = 'Phí Phông: Quỷ Máu Rừng Thiêng';
+    
+    if (this.closest('.movie-card')) {
+        movieName = this.closest('.movie-card').querySelector('.movie-title').textContent;
+    }
+    
+    openBookingForMovie(movieName);
+}
+
 function initMovieCards() {
     const trailerBtns = document.querySelectorAll('.btn-trailer');
     trailerBtns.forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
-            playTrailer();
+            alert('Trailer sẽ được phát trong một cửa sổ mới!');
         });
     });
     
@@ -723,10 +667,6 @@ function initMovieCards() {
     });
 }
 
-function playTrailer() {
-    alert('Trailer sẽ được phát trong một cửa sổ mới!');
-}
-
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         const href = this.getAttribute('href');
@@ -734,9 +674,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             e.preventDefault();
             const target = document.querySelector(href);
             if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth'
-                });
+                target.scrollIntoView({ behavior: 'smooth' });
             }
         }
     });
@@ -760,10 +698,7 @@ function handleBookingConfirm() {
     formData.append('so_ghe', seatsStr);
     formData.append('gia_ve', totalPrice);
     
-    fetch('logicDB.php', {
-        method: 'POST',
-        body: formData
-    })
+    fetch('logicDB.php', { method: 'POST', body: formData })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
@@ -776,9 +711,7 @@ function handleBookingConfirm() {
             );
             
             bookingState.selectedSeats.forEach(seat => {
-                if (!bookedSeatsForCurrentRoom.includes(seat)) {
-                    bookedSeatsForCurrentRoom.push(seat);
-                }
+                if (!bookedSeatsForCurrentRoom.includes(seat)) bookedSeatsForCurrentRoom.push(seat);
             });
             
             document.getElementById('bookingModal').classList.remove('active');
@@ -793,7 +726,6 @@ function handleBookingConfirm() {
         }
     })
     .catch(error => {
-        console.error('Lỗi:', error);
         alert('Có lỗi xảy ra, vui lòng thử lại!');
     });
 }
@@ -807,6 +739,3 @@ function updateFooterYear() {
 }
 
 updateFooterYear();
-
-console.log('Cinema Group 11 - Home Page Initialized');
-console.log('Ready to handle user interactions');

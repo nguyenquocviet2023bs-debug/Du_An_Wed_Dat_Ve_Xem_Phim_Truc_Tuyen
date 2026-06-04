@@ -16,12 +16,8 @@
             window.AuthLogin.onSuccess();
             return;
         }
-        if (typeof showMainContent === 'function') {
-            showMainContent();
-        }
-        if (typeof window.isLoggedIn !== 'undefined') {
-            window.isLoggedIn = true;
-        }
+        if (typeof showMainContent === 'function') showMainContent();
+        if (typeof window.isLoggedIn !== 'undefined') window.isLoggedIn = true;
     }
 
     function stopOtpCountdown() {
@@ -67,7 +63,7 @@
         }, 1000);
     }
 
-    function showOtpModal(maskedEmail, devMode, expiresIn) {
+    function showOtpModal(maskedEmail, devMode, expiresIn, devOtp) {
         const loginModal = document.getElementById('loginModal');
         const otpModal = document.getElementById('otpModal');
         const msg = document.getElementById('otpSentMessage');
@@ -76,7 +72,7 @@
         if (msg) {
             let text = 'Mã xác thực 6 số đã được gửi đến ' + (maskedEmail || 'email của bạn') + '.';
             if (devMode) {
-                text += ' (Chế độ dev: xem mã trong file otp_dev.log trên server.)';
+                text = '⚠️ CHẾ ĐỘ DEV — Mã OTP của bạn là: ' + (devOtp || '??????');
             }
             msg.textContent = text;
         }
@@ -95,9 +91,7 @@
         const hint = document.getElementById('otpHint');
         if (hint) hint.textContent = 'Mã đã hết hạn.';
         const otpInput = document.getElementById('otpCode');
-        if (otpInput) {
-            otpInput.value = '';
-        }
+        if (otpInput) otpInput.value = '';
         stopOtpCountdown();
         alert(message || 'Mã đã hết hạn. Vui lòng bấm "Gửi lại mã" để nhận OTP mới.');
     }
@@ -124,7 +118,7 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success && data.require_otp) {
-                    showOtpModal(data.masked_email, data.dev_mode, data.expires_in);
+                    showOtpModal(data.masked_email, data.dev_mode, data.expires_in, data.dev_otp);
                 } else if (data.success) {
                     document.getElementById('loginForm').reset();
                     onLoginSuccess();
@@ -221,15 +215,9 @@
         const resendBtn = document.getElementById('resendOtpBtn');
         const backBtn = document.getElementById('backToLoginBtn');
 
-        if (loginForm) {
-            loginForm.addEventListener('submit', handleLoginSubmit);
-        }
-        if (otpForm) {
-            otpForm.addEventListener('submit', handleOtpSubmit);
-        }
-        if (resendBtn) {
-            resendBtn.addEventListener('click', resendOtp);
-        }
+        if (loginForm) loginForm.addEventListener('submit', handleLoginSubmit);
+        if (otpForm) otpForm.addEventListener('submit', handleOtpSubmit);
+        if (resendBtn) resendBtn.addEventListener('click', resendOtp);
         if (backBtn) {
             backBtn.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -246,6 +234,5 @@
     }
 
     window.AuthLogin = { onSuccess: null, init: initAuthLogin };
-
     document.addEventListener('DOMContentLoaded', initAuthLogin);
 })();

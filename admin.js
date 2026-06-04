@@ -54,17 +54,22 @@
         }
         let html = '<div class="movies-grid">';
         list.forEach(function (m) {
+            const age = (m.gioi_han_do_tuoi || 'K');
             const img = m.hinh_anh_url
                 ? '<img src="' + escapeHtml(m.hinh_anh_url) + '" alt="' + escapeHtml(m.ten_phim) + '">'
                 : '<div class="movie-no-image"><i class="fas fa-film"></i></div>';
             html += `
                 <div class="movie-card" data-id="${m.id}">
-                    <div class="movie-image">${img}</div>
+                    <div class="movie-image" style="position:relative;">
+                        ${img}
+                        <span class="movie-age" style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.75); color:#ffd700; padding:3px 8px; border-radius:5px; font-weight:bold; font-size:12px; z-index:3;">${age}</span>
+                    </div>
                     <div class="movie-info">
                         <h4 class="movie-title">${escapeHtml(m.ten_phim)}</h4>
                         <p class="movie-meta">
                             ${m.the_loai ? '<span><i class="fas fa-tag"></i> ' + escapeHtml(m.the_loai) + '</span>' : ''}
                             ${m.thoi_luong ? '<span><i class="fas fa-clock"></i> ' + m.thoi_luong + ' phút</span>' : ''}
+                            <span><i class="fas fa-user-check"></i> ${age}</span>
                         </p>
                         ${m.dao_dien ? '<p class="movie-director"><i class="fas fa-user-tie"></i> ' + escapeHtml(m.dao_dien) + '</p>' : ''}
                         <div class="movie-actions">
@@ -105,6 +110,10 @@
         document.getElementById('movieModalTitle').textContent = 'Thêm phim mới';
         document.getElementById('movieForm').reset();
         document.getElementById('movieId').value = '';
+        document.getElementById('movieReleaseDay').value = '';
+        document.getElementById('movieReleaseMonth').value = '';
+        document.getElementById('movieReleaseYear').value = '';
+        document.getElementById('movieAgeRating').value = 'K';
         document.getElementById('movieImagePreview').style.display = 'none';
         document.getElementById('movieModal').classList.add('active');
     }
@@ -124,8 +133,16 @@
             document.getElementById('movieGenre').value = movie.the_loai || '';
             document.getElementById('movieDirector').value = movie.dao_dien || '';
             document.getElementById('movieDuration').value = movie.thoi_luong || '';
-            document.getElementById('movieReleaseDate').value = movie.ngay_khoi_chieu || '';
+            if (movie.ngay_khoi_chieu) {
+                var parts = movie.ngay_khoi_chieu.split('-');
+                if (parts.length === 3) {
+                    document.getElementById('movieReleaseYear').value = parts[0];
+                    document.getElementById('movieReleaseMonth').value = parts[1];
+                    document.getElementById('movieReleaseDay').value = parts[2];
+                }
+            }
             document.getElementById('movieImage').value = movie.hinh_anh_url || '';
+            document.getElementById('movieAgeRating').value = movie.gioi_han_do_tuoi || 'K';
 
             if (movie.hinh_anh_url) {
                 document.getElementById('movieImagePreviewImg').src = movie.hinh_anh_url;
@@ -140,6 +157,7 @@
 
     function populateYearDropdown() {
         const yearSelect = document.getElementById('revenueYear');
+        if (!yearSelect) return;
         const currentYear = new Date().getFullYear();
         yearSelect.innerHTML = '';
         for (let y = currentYear; y >= currentYear - 5; y--) {
@@ -150,7 +168,8 @@
             yearSelect.appendChild(opt);
         }
         const currentMonth = new Date().getMonth() + 1;
-        document.getElementById('revenueMonth').value = currentMonth;
+        const monthSelect = document.getElementById('revenueMonth');
+        if (monthSelect) monthSelect.value = currentMonth;
     }
 
     function loadRevenue() {
@@ -440,6 +459,15 @@
             const fd = new FormData(e.target);
             const movieId = fd.get('movie_id');
             const action = movieId ? 'adminUpdateMovie' : 'adminAddMovie';
+            
+            const day = document.getElementById('movieReleaseDay').value;
+            const month = document.getElementById('movieReleaseMonth').value;
+            const year = document.getElementById('movieReleaseYear').value;
+            if (!day || !month || !year) {
+                alert('Vui lòng chọn đầy đủ ngày, tháng, năm khởi chiếu');
+                return;
+            }
+            fd.set('ngay_khoi_chieu', year + '-' + month + '-' + day);
             
             const data = {};
             fd.forEach((value, key) => data[key] = value);
