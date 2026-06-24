@@ -288,3 +288,22 @@
 2026-06-24 17:18:01 - === SMTP End (SUCCESS) ===
 
 2026-06-24 17:18:01 - ✅ Email sent successfully to nguyenquocviet2023bs@gmail.com
+2026-06-24 17:30:56 - === SMTP Start ===
+2026-06-24 17:30:56 - Host: smtp.gmail.com, Port: 587, User: nguyenquocviet2023bs@gmail.com
+2026-06-24 17:30:58 - → Server response: 220 smtp.gmail.com ESMTP d2e1a72fcca58-845a3feb91fsm1948857b3a.15 - gsmtp
+2026-06-24 17:30:58 - → EHLO response: 250-smtp.gmail.com at your service, [58.186.46.32]
+2026-06-24 17:30:58 - → STARTTLS response: 220 2.0.0 Ready to start TLS
+2026-06-24 17:30:58 - ✓ TLS enabled successfully
+2026-06-24 17:30:59 - → Post-TLS EHLO: 250-smtp.gmail.com at your service, [58.186.46.32]
+2026-06-24 17:30:59 - → AUTH LOGIN response: 334 VXNlcm5hbWU6
+2026-06-24 17:30:59 - → Username sent, response: 334 UGFzc3dvcmQ6
+2026-06-24 17:31:00 - → Password sent, response: 235 2.7.0 Accepted
+2026-06-24 17:31:00 - ✓ Authenticated successfully
+2026-06-24 17:31:00 - → MAIL FROM response: 250 2.1.0 OK d2e1a72fcca58-845a3feb91fsm1948857b3a.15 - gsmtp
+2026-06-24 17:31:00 - → RCPT TO response: 250 2.1.5 OK d2e1a72fcca58-845a3feb91fsm1948857b3a.15 - gsmtp
+2026-06-24 17:31:00 - → DATA response: 354 Go ahead d2e1a72fcca58-845a3feb91fsm1948857b3a.15 - gsmtp
+2026-06-24 17:31:02 - → Message send response: 250 2.0.0 OK  1782297062 d2e1a72fcca58-845a3feb91fsm1948857b3a.15 - gsmtp
+2026-06-24 17:31:02 - ✓ Message sent successfully
+2026-06-24 17:31:02 - === SMTP End (SUCCESS) ===
+
+2026-06-24 17:31:02 - ✅ Email sent successfully to nguyenquocviet2023bs@gmail.com
