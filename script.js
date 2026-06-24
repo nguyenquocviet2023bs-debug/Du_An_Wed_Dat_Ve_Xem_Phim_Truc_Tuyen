@@ -408,13 +408,28 @@ function populateShowtimes(date) {
     const showtimeList = document.getElementById('showtimeList');
     showtimeList.innerHTML = '';
     
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    
     showtimesData.forEach(showtime => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'showtime-btn';
         btn.textContent = showtime.time;
         
+        const isToday = date === today;
+        if (isToday) {
+            const [h, m] = showtime.time.split(':').map(Number);
+            const showDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+            if (showDateTime <= now) {
+                btn.className = 'showtime-btn disabled';
+                btn.disabled = true;
+                btn.title = 'Suất chiếu đã qua';
+            }
+        }
+        
         btn.addEventListener('click', function(e) {
+            if (this.disabled) return;
             e.preventDefault();
             document.querySelectorAll('.showtime-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
@@ -545,7 +560,7 @@ function displaySearchResults(results, query) {
     const resultsContainer = document.getElementById('searchResults');
     
     if (results.length === 0) {
-        resultsContainer.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 30px;"><p style="color: #999; font-size: 16px;">Không tìm thấy phim nào với tên "<strong>${query}</strong>"</p></div>`;
+        resultsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px;"><p style="color: #999; font-size: 16px;">Không tìm thấy phim nào với tên "<strong>' + query + '</strong>"</p></div>';
         return;
     }
     
@@ -684,6 +699,12 @@ function handleBookingConfirm() {
     if (!isLoggedIn) {
         alert('Vui lòng đăng nhập để đặt vé!');
         openModal(document.getElementById('loginModal'));
+        return;
+    }
+    
+    const showDateTime = new Date(bookingState.selectedDate + 'T' + bookingState.selectedShowtime);
+    if (showDateTime <= new Date()) {
+        alert('Suất chiếu đã qua. Không thể đặt vé cho suất chiếu trong quá khứ!');
         return;
     }
     

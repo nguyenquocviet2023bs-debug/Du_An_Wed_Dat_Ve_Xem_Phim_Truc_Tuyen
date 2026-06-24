@@ -1,5 +1,9 @@
 let isLoggedIn = false;
 
+const editShowtimesData = [
+    '09:00', '11:30', '14:30', '17:10', '19:30', '20:35', '22:00'
+];
+
 function updateAdminNavLink(data) {
     const el = document.getElementById('navAdminLink');
     if (!el) return;
@@ -212,9 +216,13 @@ function renderTicketCard(booking) {
     const hoursLeft = booking.hours_remaining_edit;
     const daHetQuyen = booking.da_het_quyen_sua;
     const soLanSua = booking.so_lan_sua || 0;
+    const showtimePassed = booking.ngay_chieu && booking.gio_chieu && new Date(booking.ngay_chieu + 'T' + booking.gio_chieu) <= new Date();
     
     let statusClass, statusText;
-    if (daHetQuyen) {
+    if (showtimePassed) {
+        statusClass = 'status-locked';
+        statusText = '⏰ Suất chiếu đã qua';
+    } else if (daHetQuyen) {
         statusClass = 'status-locked';
         statusText = '🔒 Đã sửa 1 lần — không thể sửa thêm';
     } else if (canEditDatetime) {
@@ -222,10 +230,11 @@ function renderTicketCard(booking) {
         statusText = `Còn ${formatHoursRemaining(hoursLeft)} để sửa (còn ${1 - soLanSua} lần)`;
     } else {
         statusClass = 'status-locked';
-        statusText = 'Đã quá 30 phút — không sửa được';
+        statusText = 'Đã hết thời gian chỉnh sửa';
     }
 
-    const seatSection = canEditDatetime ? `
+    const canEdit = canEditDatetime && !showtimePassed;
+    const seatSection = canEdit ? `
                 <div class="ticket-seat-edit">
                     <div class="ticket-seat-display">
                         <p class="ticket-seat-selected">
@@ -248,9 +257,11 @@ function renderTicketCard(booking) {
                         class="ticket-input ticket-input-fixed" disabled readonly>
                 </div>`;
 
-    const lockNote = daHetQuyen 
+    const lockNote = showtimePassed 
+        ? '<p class="ticket-lock-note"><i class="fas fa-clock"></i> Suất chiếu đã qua. Vé này không thể chỉnh sửa.</p>'
+        : daHetQuyen 
         ? '<p class="ticket-lock-note"><i class="fas fa-ban"></i> Bạn đã sử dụng quyền chỉnh sửa vé này. Mỗi vé chỉ được sửa 1 lần duy nhất.</p>'
-        : (!canEditDatetime ? '<p class="ticket-lock-note"><i class="fas fa-lock"></i> Ngày và giờ chiếu đã bị khóa sau 30 phút kể từ lúc đặt vé.</p>' : '');
+        : (!canEdit ? '<p class="ticket-lock-note"><i class="fas fa-lock"></i> Đã hết thời gian cho phép chỉnh sửa vé.</p>' : '');
 
     return `
         <article class="ticket-card" data-id="${booking.id}">
@@ -270,17 +281,29 @@ function renderTicketCard(booking) {
                     <div class="ticket-field">
                         <label>Ngày chiếu</label>
                         <input type="date" name="ngay_chieu" value="${formatDate(booking.ngay_chieu)}"
-                            ${canEditDatetime ? '' : 'disabled readonly'} class="ticket-input ticket-date-input">
+                            ${canEdit ? '' : 'disabled readonly'} class="ticket-input ticket-date-input">
                     </div>
                     <div class="ticket-field">
                         <label>Giờ chiếu</label>
-                        <input type="time" name="gio_chieu" value="${formatTime(booking.gio_chieu)}"
-                            ${canEditDatetime ? '' : 'disabled readonly'} class="ticket-input ticket-time-input">
+                        <div class="edit-showtime-wrapper">
+                            <button type="button" class="ticket-input edit-showtime-current ${canEdit ? '' : 'disabled'}" ${canEdit ? '' : 'disabled'}>
+                                <span class="edit-showtime-label">${formatTime(booking.gio_chieu)}</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="edit-showtime-list" style="display:none;" data-selected="${formatTime(booking.gio_chieu)}">
+                                ${editShowtimesData.map(t => {
+                                    const origTime = formatTime(booking.gio_chieu);
+                                    const selected = t === origTime ? ' active' : '';
+                                    return `<button type="button" class="showtime-btn edit-showtime-btn${selected}" data-time="${t}">${t}</button>`;
+                                }).join('')}
+                            </div>
+                            <input type="hidden" name="gio_chieu" value="${formatTime(booking.gio_chieu)}">
+                        </div>
                     </div>
                 </div>
                 ${seatSection}
                 ${lockNote}
-                ${canEditDatetime ? `<button type="submit" class="btn-submit btn-save-ticket">
+                ${canEdit ? `<button type="submit" class="btn-submit btn-save-ticket">
                     <i class="fas fa-save"></i> Lưu thay đổi (Chỉ được sửa 1 lần)
                 </button>` : ''}
             </form>
@@ -325,14 +348,69 @@ function bindTicketEvents() {
         form.addEventListener('submit', handleUpdateBooking);
 
         const dateInput = form.querySelector('.ticket-date-input');
-        const timeInput = form.querySelector('.ticket-time-input');
+        const timeHidden = form.querySelector('[name="gio_chieu"]');
+        const showtimeWrapper = form.querySelector('.edit-showtime-wrapper');
+        const showtimeCurrent = form.querySelector('.edit-showtime-current');
+        const showtimeList = form.querySelector('.edit-showtime-list');
+        const showtimeLabel = form.querySelector('.edit-showtime-label');
+
+        function closeShowtimeList() {
+            if (showtimeList) showtimeList.style.display = 'none';
+        }
+
+        function refreshShowtimeButtons() {
+            const date = dateInput?.value;
+            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            showtimeList?.querySelectorAll('.edit-showtime-btn').forEach(btn => {
+                const time = btn.dataset.time;
+                const isPast = date === today && (() => {
+                    const [h, m] = time.split(':').map(Number);
+                    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m) <= now;
+                })();
+                btn.classList.toggle('disabled', isPast);
+                btn.disabled = isPast;
+            });
+        }
 
         if (dateInput) {
-            dateInput.addEventListener('change', () => onDatetimeChange(form));
+            dateInput.addEventListener('change', () => {
+                refreshShowtimeButtons();
+                onDatetimeChange(form);
+            });
         }
-        if (timeInput) {
-            timeInput.addEventListener('change', () => onDatetimeChange(form));
+
+        if (showtimeCurrent && showtimeList) {
+            showtimeCurrent.addEventListener('click', (e) => {
+                if (showtimeCurrent.disabled) return;
+                e.stopPropagation();
+                const isOpen = showtimeList.style.display !== 'none';
+                document.querySelectorAll('.edit-showtime-list').forEach(l => l.style.display = 'none');
+                showtimeList.style.display = isOpen ? 'none' : 'flex';
+                if (!isOpen) refreshShowtimeButtons();
+            });
+
+            showtimeList.addEventListener('click', (e) => {
+                const btn = e.target.closest('.edit-showtime-btn');
+                if (!btn || btn.disabled) return;
+                showtimeList.querySelectorAll('.edit-showtime-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const time = btn.dataset.time;
+                if (timeHidden) timeHidden.value = time;
+                if (showtimeLabel) showtimeLabel.textContent = time;
+                closeShowtimeList();
+                onDatetimeChange(form);
+            });
         }
+
+        document.addEventListener('click', (e) => {
+            if (showtimeWrapper && !showtimeWrapper.contains(e.target)) {
+                closeShowtimeList();
+            }
+        });
+
+        refreshShowtimeButtons();
+        closeShowtimeList();
 
         const changeSeatBtn = form.querySelector('.btn-change-seat');
         if (changeSeatBtn) {
@@ -355,17 +433,23 @@ async function handleUpdateBooking(e) {
     const timeInput = form.querySelector('[name="gio_chieu"]');
     const soGheInput = form.querySelector('[name="so_ghe"]');
 
-    if (dateInput.disabled || timeInput.disabled) {
-        alert('Đã quá 30 phút. Không thể sửa ngày và giờ chiếu!');
-        return;
-    }
-
     const ngayChieu = dateInput.value;
     const gioChieu = timeInput.value;
     const soGhe = soGheInput ? soGheInput.value.trim() : '';
 
+    if (dateInput.disabled) {
+        alert('Không thể sửa vé này!');
+        return;
+    }
+
     if (!ngayChieu || !gioChieu) {
         alert('Vui lòng chọn ngày và giờ chiếu!');
+        return;
+    }
+
+    const showDateTime = new Date(ngayChieu + 'T' + gioChieu);
+    if (showDateTime <= new Date()) {
+        alert('Suất chiếu đã qua. Không thể đặt vé cho suất chiếu trong quá khứ!');
         return;
     }
 

@@ -70,7 +70,7 @@
                 <h2 class="section-title">Vé Đã Đặt</h2>
                 <p class="tickets-notice">
                     <i class="fas fa-info-circle"></i>
-                    Trong vòng <strong>30 phút</strong> sau khi đặt, bạn có thể sửa <strong>1 lần duy nhất</strong> về ngày, giờ và ghế.
+                    Trong vòng <strong>30 phút</strong> sau khi đặt (hoặc đến giờ chiếu, tuỳ thời gian nào đến trước), bạn có thể sửa <strong>1 lần duy nhất</strong> về ngày, giờ và ghế.
                     Sau khi sửa lần đầu, vé sẽ bị khóa và không thể chỉnh sửa thêm.
                     Vé sẽ <strong>tự động xóa</strong> sau khi qua ngày và giờ chiếu.
                 </p>

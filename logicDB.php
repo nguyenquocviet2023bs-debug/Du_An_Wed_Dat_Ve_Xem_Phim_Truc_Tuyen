@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Ho_Chi_Minh');
 session_start();
 require_once 'db.php';
 require_once 'mailer.php';
@@ -46,6 +47,7 @@ function createPendingLogin($user, $otp) {
         'expires' => time() + 60,
         'attempts' => 0,
         'last_sent' => time(),
+        'otp_sent' => false,
     ];
 }
 
@@ -202,25 +204,14 @@ if ($action === 'login') {
                 $otp = generateLoginOtp();
                 createPendingLogin($user, $otp);
 
-                $mailResult = sendOtpEmail($email, $user['ho_ten'], $otp);
-                if (!$mailResult['success']) {
-                    unset($_SESSION['pending_login']);
-                    outputJson(['success' => false, 'message' => $mailResult['message']]);
-                }
-
                 $response = [
                     'success' => true,
                     'require_otp' => true,
                     'masked_email' => maskEmail($email),
-                    'dev_mode' => !empty($mailResult['dev']),
+                    'dev_mode' => false,
                     'expires_in' => 60,
-                    'message' => 'Mã xác thực đã được gửi đến email của bạn.',
+                    'message' => 'Vui lòng nhập mã xác thực đã gửi đến email của bạn.',
                 ];
-
-                if (!empty($mailResult['dev'])) {
-                    $response['dev_otp'] = $otp;
-                    $response['message'] = '⚠️ CHẾ ĐỘ DEV: Mã OTP của bạn là: ' . $otp;
-                }
 
                 outputJson($response);
             } else {
@@ -284,7 +275,8 @@ if ($action === 'resendLoginOtp') {
 
     $pending = $_SESSION['pending_login'];
     $isExpired = time() > ($pending['expires'] ?? 0);
-    if (!$isExpired && time() - ($pending['last_sent'] ?? 0) < 60) {
+    $firstSend = empty($pending['otp_sent']);
+    if (!$isExpired && !$firstSend && time() - ($pending['last_sent'] ?? 0) < 60) {
         $wait = 60 - (time() - ($pending['last_sent'] ?? 0));
         outputJson(['success' => false, 'message' => 'Vui lòng đợi ' . $wait . ' giây trước khi gửi lại mã!']);
     }
@@ -300,16 +292,25 @@ if ($action === 'resendLoginOtp') {
 
     $mailResult = sendOtpEmail($pending['email'], $pending['name'], $otp);
     if (!$mailResult['success']) {
+        unset($_SESSION['pending_login']);
         outputJson(['success' => false, 'message' => $mailResult['message']]);
     }
 
-    outputJson([
+    $_SESSION['pending_login']['otp_sent'] = true;
+
+    $response = [
         'success' => true,
         'masked_email' => maskEmail($pending['email']),
         'dev_mode' => !empty($mailResult['dev']),
         'expires_in' => 60,
         'message' => 'Đã gửi mã OTP mới! Mã có hiệu lực trong 60 giây.',
-    ]);
+    ];
+
+    if (!empty($mailResult['dev'])) {
+        $response['dev_otp'] = $otp;
+    }
+
+    outputJson($response);
 }
 
 if ($action === 'signup') {
@@ -383,6 +384,11 @@ if ($action === 'booking') {
     if (empty($ten_phim) || empty($ngay_chieu) || empty($gio_chieu) || empty($so_ghe) || empty($gia_ve)) {
         outputJson(['success' => false, 'message' => 'Vui lòng điền đầy đủ thông tin!']);
     }
+
+    $showtimeDatetime = $ngay_chieu . ' ' . $gio_chieu;
+    if (strtotime($showtimeDatetime) < time()) {
+        outputJson(['success' => false, 'message' => 'Suất chiếu đã qua. Không thể đặt vé cho suất chiếu trong quá khứ!']);
+    }
     
     try {
         $seatError = validateSeatsAvailable($pdo, $ten_phim, $ngay_chieu, $gio_chieu, $so_ghe);
@@ -410,22 +416,35 @@ if ($action === 'booking') {
 }
 
 function getHoursSinceBooking($ngayDatVe) {
-    $bookingTime = new DateTime($ngayDatVe);
-    $now = new DateTime();
-    return ($now->getTimestamp() - $bookingTime->getTimestamp()) / 3600;
+    $bookingTs = strtotime($ngayDatVe);
+    return $bookingTs ? (time() - $bookingTs) / 3600 : 999;
 }
 
 function enrichBookingRow($booking) {
     $hoursSince = getHoursSinceBooking($booking['ngay_dat_ve']);
     $win = BOOKING_EDIT_WINDOW_HOURS;
-    $withinWindow = $hoursSince <= $win;
+
+    $showtimeStr = ($booking['ngay_chieu'] ?? '') . ' ' . ($booking['gio_chieu'] ?? '');
+    $totalHoursFromBookingToShow = 999;
+    if ($showtimeStr) {
+        $showTs = strtotime($showtimeStr);
+        $bookingTs = strtotime($booking['ngay_dat_ve']);
+        if ($showTs && $bookingTs && $showTs > $bookingTs) {
+            $totalHoursFromBookingToShow = max(0, ($showTs - $bookingTs) / 3600);
+        } else {
+            $totalHoursFromBookingToShow = 0;
+        }
+    }
+    $effectiveWin = min($win, $totalHoursFromBookingToShow);
+
+    $withinWindow = $hoursSince <= $effectiveWin;
     $soLanSua = (int)($booking['so_lan_sua'] ?? 0);
     $daHetQuyen = $soLanSua >= 1;
-    
+
     $booking['can_edit_datetime'] = $withinWindow && !$daHetQuyen;
     $booking['can_edit_seats'] = false;
     $booking['hours_since_booking'] = round($hoursSince, 2);
-    $booking['hours_remaining_edit'] = $withinWindow ? max(0, round($win - $hoursSince, 2)) : 0;
+    $booking['hours_remaining_edit'] = $withinWindow ? max(0, round($effectiveWin - $hoursSince, 2)) : 0;
     $booking['so_lan_sua'] = $soLanSua;
     $booking['da_het_quyen_sua'] = $daHetQuyen;
     return $booking;
@@ -478,14 +497,33 @@ if ($action === 'updateBooking') {
         }
         
         $withinWindow = getHoursSinceBooking($booking['ngay_dat_ve']) <= BOOKING_EDIT_WINDOW_HOURS;
+        if ($withinWindow) {
+            $showtimeStr = ($booking['ngay_chieu'] ?? '') . ' ' . ($booking['gio_chieu'] ?? '');
+            $totalHoursFromBookingToShow = 999;
+            if ($showtimeStr) {
+                $showTs = strtotime($showtimeStr);
+                $bookingTs = strtotime($booking['ngay_dat_ve']);
+                if ($showTs && $bookingTs && $showTs > $bookingTs) {
+                    $totalHoursFromBookingToShow = max(0, ($showTs - $bookingTs) / 3600);
+                } else {
+                    $totalHoursFromBookingToShow = 0;
+                }
+            }
+            $effectiveWin = min(BOOKING_EDIT_WINDOW_HOURS, $totalHoursFromBookingToShow);
+            $withinWindow = getHoursSinceBooking($booking['ngay_dat_ve']) <= $effectiveWin;
+        }
         
         if (!$withinWindow) {
-            $mins = (int)(BOOKING_EDIT_WINDOW_HOURS * 60);
-            outputJson(['success' => false, 'message' => "Đã quá {$mins} phút kể từ khi đặt vé. Không thể thay đổi ngày và giờ chiếu!"]);
+            outputJson(['success' => false, 'message' => "Đã hết thời gian cho phép chỉnh sửa vé!"]);
         }
         
         if (empty($ngayChieu) || empty($gioChieu)) {
             outputJson(['success' => false, 'message' => 'Vui lòng chọn ngày và giờ chiếu!']);
+        }
+
+        $showtimeDatetime = $ngayChieu . ' ' . $gioChieu;
+        if (strtotime($showtimeDatetime) < time()) {
+            outputJson(['success' => false, 'message' => 'Suất chiếu đã qua. Không thể đặt vé cho suất chiếu trong quá khứ!']);
         }
 
         $newSeats = !empty($soGhe) ? $soGhe : ($booking['so_ghe'] ?? '');

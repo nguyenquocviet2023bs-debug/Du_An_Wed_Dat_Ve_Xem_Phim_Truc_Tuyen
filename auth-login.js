@@ -70,11 +70,7 @@
 
         closeModal(loginModal);
         if (msg) {
-            let text = 'Mã xác thực 6 số đã được gửi đến ' + (maskedEmail || 'email của bạn') + '.';
-            if (devMode) {
-                text = '⚠️ CHẾ ĐỘ DEV — Mã OTP của bạn là: ' + (devOtp || '??????');
-            }
-            msg.textContent = text;
+            msg.innerHTML = '<span style="color:#999;">Đang gửi mã xác thực...</span>';
         }
         const otpInput = document.getElementById('otpCode');
         if (otpInput) {
@@ -118,7 +114,8 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success && data.require_otp) {
-                    showOtpModal(data.masked_email, data.dev_mode, data.expires_in, data.dev_otp);
+                    showOtpModal(data.masked_email, false, data.expires_in);
+                    sendOtpAfterLogin();
                 } else if (data.success) {
                     document.getElementById('loginForm').reset();
                     onLoginSuccess();
@@ -171,6 +168,39 @@
             .catch(() => alert('Có lỗi xảy ra. Vui lòng thử lại.'))
             .finally(() => {
                 if (btn) btn.disabled = false;
+            });
+    }
+
+    function sendOtpAfterLogin() {
+        const formData = new FormData();
+        formData.append('action', 'resendLoginOtp');
+
+        const msg = document.getElementById('otpSentMessage');
+
+        fetch('logicDB.php', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showExpiredNotice(false);
+                    const otpInput = document.getElementById('otpCode');
+                    if (otpInput) {
+                        otpInput.value = '';
+                        otpInput.focus();
+                    }
+                    startOtpCountdown(data.expires_in || 60);
+                    if (data.dev_mode) {
+                        if (msg) msg.innerHTML = '⚠️ CHẾ ĐỘ DEV — Mã OTP của bạn là: <strong>' + (data.dev_otp || '??????') + '</strong>';
+                    } else {
+                        if (msg) msg.textContent = 'Mã xác thực 6 số đã được gửi đến ' + (data.masked_email || 'email của bạn') + '.';
+                    }
+                } else {
+                    if (msg) msg.textContent = data.message || 'Không gửi được mã xác thực!';
+                    alert(data.message || 'Không gửi được mã xác thực!');
+                }
+            })
+            .catch(() => {
+                if (msg) msg.textContent = 'Lỗi kết nối. Vui lòng bấm "Gửi lại mã".';
+                alert('Có lỗi xảy ra khi gửi mã xác thực.');
             });
     }
 
