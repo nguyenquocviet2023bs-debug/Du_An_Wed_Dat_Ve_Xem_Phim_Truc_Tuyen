@@ -617,6 +617,22 @@ if ($action === 'getMovies') {
     }
 }
 
+if ($action === 'searchMovies') {
+    try {
+        $query = trim($_POST['q'] ?? '');
+        if ($query === '') {
+            outputJson(['success' => false, 'message' => 'Vui lòng nhập tên phim!']);
+            exit;
+        }
+        $stmt = $pdo->prepare("SELECT * FROM movies WHERE ten_phim LIKE ? ORDER BY created_at DESC");
+        $stmt->execute(["%$query%"]);
+        $movies = $stmt->fetchAll();
+        outputJson(['success' => true, 'movies' => $movies]);
+    } catch (Exception $e) {
+        outputJson(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()]);
+    }
+}
+
 if ($action === 'checkSession') {
     if (isLoggedIn()) {
         $role = $_SESSION['user_role'] ?? 'user';

@@ -69,16 +69,6 @@ function handleLogout() {
     });
 }
 
-const moviesData = [
-    { id: 1, name: 'Heo 5 Móng', genre: 'Kinh dị' },
-    { id: 2, name: 'Trùm Sò', genre: 'Hài' },
-    { id: 3, name: 'Phí Phông: Quỷ Máu Rừng Thiêng', genre: 'Kinh dị' },
-    { id: 4, name: 'Đại Tiệc Trăng Máu 8', genre: 'Hành động' },
-    { id: 5, name: 'Anh Hùng', genre: 'Tâm lý' },
-    { id: 6, name: 'Super Mario Thiên Hà', genre: 'Hoạt hình' },
-    { id: 7, name: 'Shin Cậu Bé Búp Chì', genre: 'Hoạt hình' },
-];
-
 const showtimesData = [
     { time: '09:00', type: 'normal' },
     { time: '11:30', type: 'normal' },
@@ -542,40 +532,39 @@ function initSearchbar() {
     if (searchBtn) searchBtn.addEventListener('click', performSearch);
 }
 
-function removeVietnameseTones(str) {
-    const map = {
-        'a': 'à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ',
-        'e': 'è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ',
-        'i': 'ì|í|ị|ỉ|ĩ',
-        'o': 'ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ',
-        'u': 'ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ',
-        'y': 'ỳ|ý|ỵ|ỷ|ỹ',
-        'd': 'đ'
-    };
-    for (const [plain, pattern] of Object.entries(map)) {
-        str = str.replace(new RegExp(pattern, 'gi'), plain);
-    }
-    return str;
-}
-
-function performSearch() {
+async function performSearch() {
     const searchInput = document.querySelector('.search-input');
     const query = searchInput.value.trim();
-    
+
     if (!query) {
         alert('Vui lòng nhập tên phim để tìm kiếm!');
         return;
     }
-    
-    const data = window.moviesData && window.moviesData.length ? window.moviesData : moviesData;
-    const qNorm = query.toLowerCase().normalize('NFC');
-    const qNoTone = removeVietnameseTones(query).toLowerCase();
-    const results = data.filter(movie => {
-        const name = movie.name.toLowerCase().normalize('NFC');
-        return name.includes(qNorm) || removeVietnameseTones(name).includes(qNoTone);
-    });
-    displaySearchResults(results, query);
-    openModal(document.getElementById('searchResultsModal'));
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'searchMovies');
+        formData.append('q', query);
+
+        const response = await fetch('logicDB.php', { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (data.success) {
+            const results = data.movies.map(m => ({
+                id: m.id,
+                name: m.ten_phim,
+                genre: m.the_loai || 'Chưa rõ',
+                image: m.hinh_anh_url,
+                duration: m.thoi_luong
+            }));
+            displaySearchResults(results, query);
+            openModal(document.getElementById('searchResultsModal'));
+        } else {
+            alert(data.message || 'Lỗi tìm kiếm!');
+        }
+    } catch (err) {
+        alert('Lỗi kết nối!');
+    }
 }
 
 function displaySearchResults(results, query) {
