@@ -542,16 +542,38 @@ function initSearchbar() {
     if (searchBtn) searchBtn.addEventListener('click', performSearch);
 }
 
+function removeVietnameseTones(str) {
+    const map = {
+        'a': 'à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ',
+        'e': 'è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ',
+        'i': 'ì|í|ị|ỉ|ĩ',
+        'o': 'ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ',
+        'u': 'ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ',
+        'y': 'ỳ|ý|ỵ|ỷ|ỹ',
+        'd': 'đ'
+    };
+    for (const [plain, pattern] of Object.entries(map)) {
+        str = str.replace(new RegExp(pattern, 'gi'), plain);
+    }
+    return str;
+}
+
 function performSearch() {
     const searchInput = document.querySelector('.search-input');
-    const query = searchInput.value.toLowerCase().trim();
+    const query = searchInput.value.trim();
     
     if (!query) {
         alert('Vui lòng nhập tên phim để tìm kiếm!');
         return;
     }
     
-    const results = moviesData.filter(movie => movie.name.toLowerCase().includes(query));
+    const data = window.moviesData && window.moviesData.length ? window.moviesData : moviesData;
+    const qNorm = query.toLowerCase().normalize('NFC');
+    const qNoTone = removeVietnameseTones(query).toLowerCase();
+    const results = data.filter(movie => {
+        const name = movie.name.toLowerCase().normalize('NFC');
+        return name.includes(qNorm) || removeVietnameseTones(name).includes(qNoTone);
+    });
     displaySearchResults(results, query);
     openModal(document.getElementById('searchResultsModal'));
 }
