@@ -2,6 +2,9 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
+CREATE DATABASE IF NOT EXISTS `movie_booking` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `movie_booking`;
+
 CREATE TABLE `bookings` (
   `id` int(11) NOT NULL,
   `user_phone` varchar(20) NOT NULL,
@@ -11,13 +14,14 @@ CREATE TABLE `bookings` (
   `so_ghe` varchar(10) NOT NULL,
   `gia_ve` decimal(10,2) DEFAULT 0.00,
   `ngay_dat_ve` timestamp NOT NULL DEFAULT current_timestamp(),
-  `so_lan_sua` int(11) DEFAULT 0 COMMENT 'Số lần user đã chỉnh sửa vé'
+  `so_lan_sua` int(11) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `bookings` (`id`, `user_phone`, `ten_phim_dat`, `ngay_chieu`, `gio_chieu`, `so_ghe`, `gia_ve`, `ngay_dat_ve`, `so_lan_sua`) VALUES
 (6, '0123456789', 'Phí Phông: Quỷ Máu Rừng Thiêng', '2026-05-26', '11:30:00', 'C3', 50000.00, '2026-05-25 03:19:46', 0),
 (7, '0123456789', 'Phí Phông: Quỷ Máu Rừng Thiêng', '2026-05-25', '11:30:00', 'C4', 50000.00, '2026-05-25 03:20:23', 0),
-(11, '0347996049', 'Phí Phông: Quỷ Máu Rừng Thiêng', '2026-06-04', '14:30:00', 'D4, D5', 100000.00, '2026-06-03 02:33:50', 1);
+(13, '0347996049', 'Ốc Mượn Hồn', '2026-06-24', '17:10:00', 'C4, C5', 100000.00, '2026-06-24 09:37:39', 1),
+(14, '0347996049', 'Ốc Mượn Hồn', '2026-06-24', '17:10:00', 'B4', 50000.00, '2026-06-24 09:54:50', 1);
 
 CREATE TABLE `movies` (
   `id` int(11) NOT NULL,
@@ -35,15 +39,15 @@ CREATE TABLE `movies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `movies` (`id`, `ten_phim`, `mo_ta`, `the_loai`, `dao_dien`, `thoi_luong`, `hinh_anh_url`, `ngay_khoi_chieu`, `diem_danh_gia`, `gioi_han_do_tuoi`, `created_at`, `updated_at`) VALUES
-(1, 'Anh Hùng', NULL, 'Tâm lý', NULL, 122, 'anhhung.jpg', NULL, 8.7, 'T13', '2026-05-14 01:36:49', '2026-06-03 07:59:41'),
-(2, 'Gấu Boonie: Kungfu Ân Sĩ', NULL, 'Phiêu lưu - Hài', NULL, 125, 'gauboonie.jpg', NULL, 8.3, 'T13', '2026-05-14 01:36:49', '2026-06-03 07:59:41'),
-(3, 'Heo 5 Móng', NULL, 'Kinh dị', NULL, 119, 'heo5mong.jpg', NULL, 8.3, 'T18', '2026-05-14 01:36:49', '2026-06-03 07:59:41'),
-(4, 'Phí Phông: Quỷ Máu Rừng Thiêng', NULL, 'Kinh dị', NULL, 128, 'hq720.jpg', NULL, 8.7, 'T16', '2026-05-14 01:36:49', '2026-06-03 07:59:41'),
-(5, 'Shin Cậu Bé Búp Chì: Quả Trứng Vương Quốc', NULL, 'Hài - Phiêu lưu', NULL, 110, 'shincaubebutchi.jpg', NULL, 8.8, 'K', '2026-05-14 01:36:49', '2026-06-03 07:59:41'),
-(6, 'Super Mario Thiên Hà', NULL, 'Hoạt hình - Phiêu lưu', NULL, 99, 'mariothienha.jpg', NULL, 8.1, 'K', '2026-05-14 01:36:49', '2026-06-03 07:59:41'),
-(7, 'Trùm Sò', NULL, 'Hài', NULL, 105, 'trumso.webp', NULL, 8.6, 'K', '2026-05-14 01:36:49', '2026-06-03 07:59:41'),
-(8, 'Đại Tiệc Trăng Máu 8', NULL, 'Hành động', NULL, 135, 'daitiectrangmau8.jpg', NULL, 8.2, 'T16', '2026-05-14 01:36:49', '2026-06-03 07:59:41'),
-(9, 'Ốc Mượn Hồn', 'Một người chồng đau khổ khi vợ qua đời trong tai nạn. Hạnh phúc tưởng chừng được hồi sinh khi linh hồn vợ anh trở về trong thân xác người khác...', 'Tâm lý - Kinh dị', 'Đinh Tuấn Vũ', 120, 'ocmuonhon.jpg', '2026-06-05', 8.5, 'T16', '2026-06-04 00:00:00', '2026-06-04 00:00:00');
+(4, 'Phí Phông: Quỷ Máu Rừng Thiêng', '', 'Kinh dị', '', 128, 'https://cinestar.com.vn/_next/image/?url=https:%2F%2Fapi-website.cinestar.com.vn%2Fmedia%2Fwysiwyg%2FPosters%2F04-2026%2Fphi-phong-teaser.jpg&w=3840&q=75', '2026-04-24', 8.7, 'T16', '2026-05-14 01:36:49', '2026-06-24 10:30:45'),
+(9, 'Tạm biệt Gohan (K)', 'Suốt mười năm đằng đẵng, chú chó hoang lông trắng với chiếc mũi đỏ mang tên \'GOHAN\' cứ thế phiêu dạt giữa cuộc đời, ôm trọn những ký ức chẳng thể phai...', 'Tình cảm', 'Chayanop Boonprakob - Baz Poonpiriya - Atta Hemwadee', 140, 'https://cinestar.com.vn/_next/image/?url=https%3A%2F%2Fapi-website.cinestar.com.vn%2Fmedia%2Fwysiwyg%2FPosters%2F05-2026%2Ftam-biet-gohan.jpg&w=1920&q=75', '2026-05-15', NULL, NULL, '2026-06-04 13:17:07', '2026-06-04 13:25:31'),
+(10, 'Ma xó', 'Trong cái nghèo cùng cực và nỗi sợ mất con sau một lần sảy thai, cuộc sống của vợ chồng Phú và Thảo (đang mang thai) trở nên tăm tối hơn bao giờ hết k...', 'Kinh dị', 'Phan Bá Hỷ', 102, 'https://asset-cdn.yeah1.com/images/MX_TEASER_POSTER_SOCIAL_be27d9cf05.jpg', '2026-06-05', NULL, 'T16', '2026-06-04 13:33:09', '2026-06-04 15:01:21'),
+(12, 'Ngôi đền kì quái 5', 'Thương hiệu Kinh dị - Hài Thái Lan ăn khách nhất đã trở lại. Một năm sau khi đánh bại hồn ma Nak Tinn, nhóm bạn của Balloon và First chưa kịp tận hưởn...', 'Kinh dị', 'Phontharis Chotkijsadarsopon', 118, 'https://cinestar.com.vn/_next/image/?url=https%3A%2F%2Fapi-website.cinestar.com.vn%2Fmedia%2Fwysiwyg%2FPosters%2F05-2026%2Fpeenak.jpg&w=1920&q=75', '2026-05-29', NULL, 'T16', '2026-06-04 13:52:12', '2026-06-04 13:52:12'),
+(13, 'Doraemon: Nobita và lâu đài dưới đáy biển', 'Bước vào kì nghỉ hè, Nobita và các bạn tranh cãi chí chóe về địa điểm cắm trại. Theo đề xuất của Doraemon, cả nhóm quyết định cắm trại giữa lòng đại dương! Sử dụng bảo bối thần kì “xe Buggy chạy dưới nước” và “đèn pin thích nghi”, 5 bạn nhỏ tận hưởng chuyến cắm trại dưới đáy biển, gặp gỡ vô vàn sinh vật lí thú trên đường đi. Sau khi phát hiện một chiếc tàu đắm, nhóm bạn đã gặp chàng thanh niên bí ẩn El. Thật bất ngờ, anh ta lại là cư dân đáy biển, sống tại “liên bang Mu”, một vùng biển rộng lớn! Vốn căm ghét người mặt đất, cư dân đáy biển không thể nào tin tưởng Nobita và các bạn. Đúng lúc đó, lời thông báo “lâu đài quỷ... đã bắt đầu phục sinh!!” được truyền tới. “Lâu đài quỷ” khiến cư dân đáy biển khiếp sợ, rốt cuộc là gì? Đặt trọn niềm tin vào bè bạn trong lồng ngực, chuyến phiêu lưu vĩ đại quyết định số phận của trái đất, bắt đầu!', 'Hoạt hình - 2D', '', 101, 'https://starlight.vn/Areas/Admin/Content/Fileuploads/images/POSTER2026/Layer%207.jpg', '2026-05-22', NULL, 'K', '2026-06-04 13:56:23', '2026-06-04 13:56:23'),
+(14, 'Bài trùng phá án', 'Cựu cảnh sát trọng án Jae-hyuk \"bị ép buộc\" phải hợp tác cùng tân binh Joong-ho để điều tra một vụ trộm nhỏ trong thị thấn, nhưng lại mở ra hàng loạt ...', 'Hài, Hành Động, Phiêu Lưu', 'PARK Chul-hwan', 97, 'https://starlight.vn/Areas/Admin/Content/Fileuploads/images/POSTER2026/Bai-trung-pha-an.jpg', '2026-05-22', NULL, 'T16', '2026-06-04 15:01:05', '2026-06-04 15:01:05'),
+(15, 'Làng trùng tang', 'Siêu phẩm kinh dị tiếp theo từ nhà sản xuất Ác Linh Trong Xác Mẹ, Lọ Lem Chơi Ngải và Con Nít Quỷ Làng Trùng Tang theo chân Fitri (Wavi Zihan) – một nữ tư vấn viên quyết tâm làm sáng tỏ vụ bạo lực học đường liên quan đến cậu học sinh nghèo Jaya (Ali Fikry), giữa bối cảnh những lời kêu cứu bị phớt lờ và sự thật dần chìm trong im lặng. Thế nhưng, càng đào sâu, Fitri càng đối mặt với những hiện tượng rùng rợn: những người liên quan lần lượt gặp kết cục bí ẩn, rồi lại xuất hiện như chưa từng có chuyện gì xảy ra. Một thế lực siêu nhiên đang thao túng dân làng, khiến họ đối diện với “bản thể bóng tối” của chính mình – Qorin.', 'Kinh dị - 2D', 'Ginanti Rona', 107, 'https://starlight.vn/Areas/Admin/Content/Fileuploads/images/POSTER2026/Lang-trung-tang.jpg', '2026-05-22', NULL, 'T18', '2026-06-04 15:03:57', '2026-06-04 15:04:43'),
+(16, 'He-man và những chiến binh vũ trụ', 'Thương hiệu huyền thoại trở lại màn ảnh rộng. Sau 15 năm thất lạc, Thanh Gươm Quyền Năng đưa Hoàng tử Adam (Nicholas Galitzine) trở về hành tinh Eternia và phát hiện quê hương đã rơi vào sự cai trị tàn bạo của Skeletor (Jared Leto). Để cứu gia đình và thế giới của mình, Adam phải sát cánh cùng những đồng minh thân cận như Teela (Camila Mendes) và Duncan/Man-At-Arms (Idris Elba), đồng thời chấp nhận định mệnh thật sự của mình: trở thành He-Man - người đàn ông mạnh nhất vũ trụ.', 'Hành Động, Khoa Học Viễn Tưởng', 'Travis Knight', 140, 'https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/p/o/poster_1__3_6.jpg', '2026-06-05', NULL, 'T13', '2026-06-04 15:09:07', '2026-06-04 15:09:07'),
+(18, 'Ốc Mượn Hồn', 'Một người chồng đau khổ khi vợ qua đời trong tai nạn. Hạnh phúc tưởng chừng được hồi sinh khi linh hồn vợ anh trở về trong thân xác người khác...', 'Tâm lý', 'Đinh Tuấn Vũ', 109, 'https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/3/5/350x495-omh_1.jpg', '2026-06-01', 8.5, 'T16', '2026-06-04 15:21:15', '2026-06-04 15:26:32');
 
 CREATE TABLE `users` (
   `dien_thoai` varchar(20) NOT NULL,
@@ -53,15 +57,13 @@ CREATE TABLE `users` (
   `ngay_sinh` date NOT NULL,
   `gioi_tinh` enum('Nam','Nữ','Khác') DEFAULT NULL,
   `mat_khau` varchar(255) NOT NULL,
-  `vai_tro` varchar(20) NOT NULL DEFAULT 'user' COMMENT 'user | admin',
-  `tai_khoan_bi_khoa` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0=hoat dong, 1=bi khoa',
+  `vai_tro` varchar(20) NOT NULL DEFAULT 'user',
+  `tai_khoan_bi_khoa` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `users` (`dien_thoai`, `ho_ten`, `email`, `dia_chi`, `ngay_sinh`, `gioi_tinh`, `mat_khau`, `vai_tro`, `tai_khoan_bi_khoa`, `created_at`) VALUES
-('0123456789', 'user1', 'user1@gmail.com', '170 An Dương Vương, Quy Nhơn', '2000-01-01', '', '$2y$10$945J922Ft0Cm4yeGsHKmkeZZs4lNCVsHW6JvBbDZLoibjbI0uzGu.', 'user', 1, '2026-05-14 01:40:54'),
-('0347996049', 'Nguyễn Quốc Việt', 'nguyenquocviet2023bs@gmail.com', NULL, '0000-00-00', NULL, '$2y$10$wo5i/aQP9Mm578g2hViWNOO8qcDKwtgVfrqhVbwxNipOlTzpT5jCC', 'user', 0, '2026-05-19 02:48:35'),
-('0999999001', 'Quản trị viên', 'admin1@admin.com', NULL, '0000-00-00', NULL, '$2y$10$zoRbHWFb2EGWoW6DbQGG1Oinl/y6Wlf.UMkixQXPnTFDfwkArNDgi', 'admin', 0, '2026-05-26 23:06:09');
+('0999999001', 'Quản trị viên', 'admin1@admin.com', NULL, '0000-00-00', NULL, '$2y$10$vkDmo35qCTrY6GlCyZkp.elZ4LaxvpAgnTdCVhxycNcgt1wc9/0xe', 'admin', 0, '2026-05-26 23:06:09');
 
 CREATE TABLE `user_activities` (
   `id` int(11) NOT NULL,
@@ -105,9 +107,9 @@ INSERT INTO `user_activities` (`id`, `user_phone`, `loai_hoat_dong`, `noi_dung`,
 (31, '0347996049', 'het_han', 'Vé phim \"Phí Phông: Quỷ Máu Rừng Thiêng\" (suất 26/05/2026 11:30, ghế C4) đã qua giờ chiếu và được xóa khỏi danh sách vé.', '2026-05-27 02:55:01'),
 (32, '0347996049', 'dat_ve', 'Đặt vé phim \"Phí Phông: Quỷ Máu Rừng Thiêng\" - Ghế: D4, D5 - Suất: 28/05/2026 14:30 - 100.000 VND.', '2026-05-27 02:55:51'),
 (33, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-05-27 03:01:11'),
-(34, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-05-27 03:03:01'),
-(35, '0347996049', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-05-27 03:04:05'),
-(36, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-02 02:13:52'),
+(34, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-02 02:13:01'),
+(35, '0347996049', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-02 02:14:05'),
+(36, '0347996049', 'dang_nhap', 'Đăng nhập thành open (đã xác thực OTP qua email).', '2026-06-02 02:13:52'),
 (37, '0347996049', 'het_han', 'Vé phim \"Heo 5 Móng\" (suất 28/05/2026 11:30, ghế D4, D5) đã qua giờ chiếu và được xóa khỏi danh sách vé.', '2026-06-02 02:13:58'),
 (38, '0347996049', 'het_han', 'Vé phim \"Phí Phông: Quỷ Máu Rừng Thiêng\" (suất 28/05/2026 14:30, ghế D4, D5) đã qua giờ chiếu và được xóa khỏi danh sách vé.', '2026-06-02 02:13:58'),
 (39, '0347996049', 'dat_ve', 'Đặt vé phim \"Heo 5 Móng\" - Ghế: D5 - Suất: 03/06/2026 11:30 - 50.000 VND.', '2026-06-02 02:14:14'),
@@ -140,7 +142,72 @@ INSERT INTO `user_activities` (`id`, `user_phone`, `loai_hoat_dong`, `noi_dung`,
 (66, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-06-03 08:17:16'),
 (67, '0999999001', 'quan_tri', 'Khóa tài khoản SĐT 0123456789 bởi quản trị viên.', '2026-06-03 08:18:27'),
 (68, '0999999001', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-03 08:18:50'),
-(69, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-03 08:19:33');
+(69, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-03 08:19:33'),
+(70, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-04 12:50:20'),
+(71, '0347996049', 'het_han', 'Vé phim \"Phí Phông: Quỷ Máu Rừng Thiêng\" (suất 04/06/2026 14:30, ghế D4, D5) đã qua giờ chiếu và được xóa khỏi danh sách vé.', '2026-06-04 12:50:45'),
+(72, '0347996049', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-04 12:50:58'),
+(73, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-06-04 12:52:56'),
+(74, '0999999001', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-04 12:56:41'),
+(75, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-06-04 12:56:52'),
+(76, '0999999001', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-04 12:57:42'),
+(77, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-06-04 12:57:55'),
+(78, '0999999001', 'quan_tri', 'Thêm phim mới: Tạm biệt Gohan (K)', '2026-06-04 13:17:07'),
+(79, '0999999001', 'quan_tri', 'Cập nhật thông tin phim: Tạm biệt Gohan (K)', '2026-06-04 13:25:31'),
+(80, '0999999001', 'quan_tri', 'Thêm phim mới: Ma xó', '2026-06-04 13:33:09'),
+(81, '0999999001', 'quan_tri', 'Cập nhật thông tin phim: Ma xó', '2026-06-04 13:36:32'),
+(82, '0999999001', 'quan_tri', 'Xóa phim: Anh Hùng', '2026-06-04 13:37:56'),
+(83, '0999999001', 'quan_tri', 'Xóa phim: Gấu Boonie: Kungfu Ân Sĩ', '2026-06-04 13:38:00'),
+(84, '0999999001', 'quan_tri', 'Xóa phim: Heo 5 Móng', '2026-06-04 13:38:04'),
+(85, '0999999001', 'quan_tri', 'Xóa phim: Đại Tiệc Trăng Máu 8', '2026-06-04 13:41:06'),
+(86, '0999999001', 'quan_tri', 'Xóa phim: Trùm Sò', '2026-06-04 13:41:12'),
+(87, '0999999001', 'quan_tri', 'Xóa phim: Super Mario Thiên Hà', '2026-06-04 13:41:18'),
+(88, '0999999001', 'quan_tri', 'Xóa phim: Shin Cậu Bé Búp Chì: Quả Trứng Vương Quốc', '2026-06-04 13:41:23'),
+(89, '0999999001', 'quan_tri', 'Thêm phim mới: Ốc mượn hồn', '2026-06-04 13:44:19'),
+(90, '0999999001', 'quan_tri', 'Thêm phim mới: Ngôi đền kì quái 5', '2026-06-04 13:52:12'),
+(91, '0999999001', 'quan_tri', 'Thêm phim mới: Doraemon: Nobita và lâu đài dưới đáy biển', '2026-06-04 13:56:23'),
+(92, '0999999001', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-04 14:01:51'),
+(93, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-04 14:02:21'),
+(94, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-04 14:11:13'),
+(95, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-04 14:27:27'),
+(96, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-04 14:28:57'),
+(97, '0347996049', 'dat_ve', 'Đặt vé phim \"Doraemon: Nobita và lâu đài dưới đáy biển\" - Ghế: A4, A5 - Suất: 05/06/2026 11:30 - 100.000 VND.', '2026-06-04 14:45:58'),
+(98, '0347996049', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-04 14:49:52'),
+(99, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-06-04 14:50:07'),
+(100, '0999999001', 'quan_tri', 'Thêm phim mới: Bài trùng phá án', '2026-06-04 15:01:05'),
+(101, '0999999001', 'quan_tri', 'Cập nhật thông tin phim: Ma xó', '2026-06-04 15:01:21'),
+(102, '0999999001', 'quan_tri', 'Thêm phim mới: Làng trùng tang', '2026-06-04 15:03:57'),
+(103, '0999999001', 'quan_tri', 'Cập nhật thông tin phim: Làng trùng tang', '2026-06-04 15:04:43'),
+(104, '0999999001', 'quan_tri', 'Thêm phim mới: He-man và những chiến binh vũ trụ', '2026-06-04 15:09:07'),
+(105, '0999999001', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-04 15:14:24'),
+(106, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-04 15:14:55'),
+(107, '0347996049', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-04 15:24:42'),
+(108, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-06-04 15:24:57'),
+(109, '0999999001', 'quan_tri', 'Cập nhật thông tin phim: Ốc Mượn Hồn', '2026-06-04 15:26:32'),
+(110, '0999999001', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-04 15:28:57'),
+(111, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-06-17 07:46:00'),
+(112, '0999999001', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-17 08:01:58'),
+(113, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-17 08:03:02'),
+(114, '0347996049', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-17 08:13:11'),
+(115, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-06-17 08:13:25'),
+(116, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-24 09:04:34'),
+(117, '0347996049', 'het_han', 'Vé phim \"Doraemon: Nobita và lâu đài dưới đáy biển\" (suất 05/06/2026 11:30, ghế A4, A5) đã qua giờ chiếu và được xóa khỏi danh sách vé.', '2026-06-24 09:05:26'),
+(118, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-24 09:28:38'),
+(119, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-24 09:37:20'),
+(120, '0347996049', 'dat_ve', 'Đặt vé phim \"Ốc Mượn Hồn\" - Ghế: C4, C5 - Suất: 24/06/2026 17:10 - 100.000 VND.', '2026-06-24 09:37:39'),
+(121, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-24 09:44:35'),
+(122, '0347996049', 'dat_ve', 'Đặt vé phim \"Ốc Mượn Hồn\" - Ghế: B4 - Suất: 24/06/2026 17:10 - 50.000 VND.', '2026-06-24 09:54:50'),
+(123, '0347996049', 'sua_ve', 'Cập nhật vé phim \"Ốc Mượn Hồn\" - Suất mới: 24/06/2026 17:10 - Ghế: B4 (Lần sửa thứ 1).', '2026-06-24 10:02:36'),
+(124, '0347996049', 'sua_ve', 'Cập nhật vé phim \"Ốc Mượn Hồn\" - Suất mới: 24/06/2026 17:10 - Ghế: C4, C5 (Lần sửa thứ 1).', '2026-06-24 10:02:39'),
+(125, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-24 10:16:07'),
+(126, '0347996049', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-24 10:16:45'),
+(127, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-06-24 10:16:55'),
+(128, '0999999001', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-24 10:17:48'),
+(129, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-24 10:18:11'),
+(130, '0347996049', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-24 10:29:59'),
+(131, '0999999001', 'dang_nhap', 'Đăng nhập quản trị thành công.', '2026-06-24 10:30:10'),
+(132, '0999999001', 'quan_tri', 'Cập nhật thông tin phim: Phí Phông: Quỷ Máu Rừng Thiêng', '2026-06-24 10:30:45'),
+(133, '0999999001', 'dang_xuat', 'Đăng xuất khỏi hệ thống.', '2026-06-24 10:30:50'),
+(134, '0347996049', 'dang_nhap', 'Đăng nhập thành công (đã xác thực OTP qua email).', '2026-06-24 10:31:15');
 
 ALTER TABLE `bookings`
   ADD PRIMARY KEY (`id`),
@@ -163,13 +230,13 @@ ALTER TABLE `user_activities`
   ADD KEY `idx_created_at` (`created_at`);
 
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 ALTER TABLE `movies`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 ALTER TABLE `user_activities`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=135;
 
 ALTER TABLE `bookings`
   ADD CONSTRAINT `fk_movie_name` FOREIGN KEY (`ten_phim_dat`) REFERENCES `movies` (`ten_phim`) ON DELETE CASCADE ON UPDATE CASCADE,
